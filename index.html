@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코딩테스트 입문 - 진행 현황</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #161b22 0%, #1a2332 100%);
+            border-bottom: 1px solid #30363d;
+            padding: 2rem 0;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .header h1 span { color: #58a6ff; }
+        .header p { color: #8b949e; font-size: 1rem; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+        .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 2rem;
+            transition: transform 0.2s, border-color 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .card:hover { transform: translateY(-4px); border-color: #58a6ff; }
+        .card-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .avatar {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.25rem; font-weight: 700;
+            color: #fff;
+        }
+        .avatar.nym { background: linear-gradient(135deg, #f97583, #d2a8ff); }
+        .avatar.jjw { background: linear-gradient(135deg, #56d364, #58a6ff); }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+        .stat {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .stat-value { font-size: 1.5rem; font-weight: 700; color: #58a6ff; }
+        .stat-label { font-size: 0.8rem; color: #8b949e; margin-top: 0.25rem; }
+        .mini-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+            margin-top: 1.5rem;
+        }
+        .mini-day {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: #161b22;
+            border: 1px solid #1b2028;
+        }
+        .mini-day.active-1 { background: #0e4429; border-color: #0e4429; }
+        .mini-day.active-2 { background: #006d32; border-color: #006d32; }
+        .mini-day.active-3 { background: #26a641; border-color: #26a641; }
+        .mini-day.active-4 { background: #39d353; border-color: #39d353; }
+        .comparison {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        .comparison h2 { font-size: 1.25rem; margin-bottom: 1.5rem; }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .bar-label { width: 50px; font-weight: 600; text-align: right; }
+        .bar-track {
+            flex: 1;
+            height: 28px;
+            background: #0d1117;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: width 0.8s ease;
+        }
+        .bar-fill.nym { background: linear-gradient(90deg, #f97583, #d2a8ff); }
+        .bar-fill.jjw { background: linear-gradient(90deg, #56d364, #58a6ff); }
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #484f58;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 640px) {
+            .cards { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>Programmers</span> 코딩테스트 입문</h1>
+        <p>매일 풀고, 매일 성장하기</p>
+    </div>
+
+    <div class="container">
+        <div class="cards">
+            <a class="card" href="nym/" id="card-nym">
+                <div class="card-name">
+                    <div class="avatar nym">N</div>
+                    nym
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="nym-solved">-</div>
+                        <div class="stat-label">풀이 완료</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="nym-streak">-</div>
+                        <div class="stat-label">연속 일수</div>
+                    </div>
+                </div>
+                <div class="mini-calendar" id="nym-cal"></div>
+            </a>
+            <a class="card" href="jjw/" id="card-jjw">
+                <div class="card-name">
+                    <div class="avatar jjw">J</div>
+                    jjw
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="jjw-solved">-</div>
+                        <div class="stat-label">풀이 완료</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="jjw-streak">-</div>
+                        <div class="stat-label">연속 일수</div>
+                    </div>
+                </div>
+                <div class="mini-calendar" id="jjw-cal"></div>
+            </a>
+        </div>
+
+        <div class="comparison">
+            <h2>진행률 비교</h2>
+            <div class="bar-row">
+                <div class="bar-label">nym</div>
+                <div class="bar-track">
+                    <div class="bar-fill nym" id="nym-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="bar-row">
+                <div class="bar-label">jjw</div>
+                <div class="bar-track">
+                    <div class="bar-fill jjw" id="jjw-bar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">Programmers Lv.0 코딩테스트 입문 트래커</div>
+
+    <script>
+        const TOTAL_PROBLEMS = 60;
+
+        async function loadProgress(name) {
+            try {
+                const res = await fetch(`${name}/progress.json`);
+                if (!res.ok) return {};
+                return await res.json();
+            } catch { return {}; }
+        }
+
+        function getStats(data) {
+            const solved = data.solved || {};
+            const allProblems = new Set();
+            const dayMap = {};
+            for (const [date, problems] of Object.entries(solved)) {
+                dayMap[date] = problems.length;
+                problems.forEach(p => allProblems.add(p));
+            }
+            const totalSolved = allProblems.size;
+
+            let streak = 0;
+            const today = new Date();
+            const d = new Date(today);
+            while (true) {
+                const key = d.toISOString().split('T')[0];
+                if (dayMap[key]) { streak++; d.setDate(d.getDate() - 1); }
+                else break;
+            }
+            return { totalSolved, streak, dayMap };
+        }
+
+        function renderMiniCal(containerId, dayMap) {
+            const container = document.getElementById(containerId);
+            const today = new Date();
+            const cells = 28;
+            const startDate = new Date(today);
+            startDate.setDate(startDate.getDate() - cells + 1);
+
+            for (let i = 0; i < cells; i++) {
+                const d = new Date(startDate);
+                d.setDate(d.getDate() + i);
+                const key = d.toISOString().split('T')[0];
+                const div = document.createElement('div');
+                div.className = 'mini-day';
+                const count = dayMap[key] || 0;
+                if (count >= 4) div.classList.add('active-4');
+                else if (count >= 3) div.classList.add('active-3');
+                else if (count >= 2) div.classList.add('active-2');
+                else if (count >= 1) div.classList.add('active-1');
+                div.title = `${key}: ${count}문제`;
+                container.appendChild(div);
+            }
+        }
+
+        async function init() {
+            const [nymData, jjwData] = await Promise.all([
+                loadProgress('nym'),
+                loadProgress('jjw')
+            ]);
+
+            const nymStats = getStats(nymData);
+            const jjwStats = getStats(jjwData);
+
+            document.getElementById('nym-solved').textContent = nymStats.totalSolved;
+            document.getElementById('nym-streak').textContent = nymStats.streak + '일';
+            document.getElementById('jjw-solved').textContent = jjwStats.totalSolved;
+            document.getElementById('jjw-streak').textContent = jjwStats.streak + '일';
+
+            renderMiniCal('nym-cal', nymStats.dayMap);
+            renderMiniCal('jjw-cal', jjwStats.dayMap);
+
+            const nymPct = Math.round((nymStats.totalSolved / TOTAL_PROBLEMS) * 100);
+            const jjwPct = Math.round((jjwStats.totalSolved / TOTAL_PROBLEMS) * 100);
+            setTimeout(() => {
+                document.getElementById('nym-bar').style.width = nymPct + '%';
+                document.getElementById('nym-bar').textContent = nymPct + '%';
+                document.getElementById('jjw-bar').style.width = jjwPct + '%';
+                document.getElementById('jjw-bar').textContent = jjwPct + '%';
+            }, 100);
+        }
+
+        init();
+    </script>
+</body>
+</html>

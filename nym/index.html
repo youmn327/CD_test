@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nym - 코딩테스트 진행 현황</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            min-height: 100vh;
+        }
+        a { color: #58a6ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .header {
+            background: linear-gradient(135deg, #161b22 0%, #2d1b3d 100%);
+            border-bottom: 1px solid #30363d;
+            padding: 1.5rem 0;
+        }
+        .header-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left { display: flex; align-items: center; gap: 1rem; }
+        .avatar {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f97583, #d2a8ff);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 700;
+        }
+        .header-info h1 { font-size: 1.5rem; font-weight: 700; }
+        .header-info p { color: #8b949e; font-size: 0.9rem; }
+        .back-link { color: #8b949e; font-size: 0.9rem; }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+        .stat-card .value.streak { color: #f0883e; }
+        .stat-card .value.rate { color: #56d364; }
+        .stat-card .value.today { color: #d2a8ff; }
+        .stat-card .label {
+            color: #8b949e;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+
+        .section {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .calendar-container { overflow-x: auto; }
+        .calendar-months {
+            display: flex;
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+            padding-left: 36px;
+        }
+        .calendar-months span { font-size: 0.75rem; color: #8b949e; min-width: 52px; }
+        .calendar-wrap { display: flex; gap: 0; }
+        .calendar-days {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-right: 6px;
+            padding-top: 2px;
+        }
+        .calendar-days span {
+            font-size: 0.7rem;
+            color: #8b949e;
+            height: 15px;
+            line-height: 15px;
+            width: 28px;
+            text-align: right;
+        }
+        .calendar {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            grid-auto-flow: column;
+            gap: 3px;
+        }
+        .cal-cell {
+            width: 15px; height: 15px;
+            border-radius: 3px;
+            background: #161b22;
+            border: 1px solid #1b2028;
+            cursor: pointer;
+            position: relative;
+        }
+        .cal-cell:hover { border-color: #58a6ff; }
+        .cal-cell.lv1 { background: #0e4429; border-color: #0e4429; }
+        .cal-cell.lv2 { background: #006d32; border-color: #006d32; }
+        .cal-cell.lv3 { background: #26a641; border-color: #26a641; }
+        .cal-cell.lv4 { background: #39d353; border-color: #39d353; }
+        .cal-cell.future { background: #0d1117; border-color: transparent; }
+        .cal-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d333b;
+            color: #e6edf3;
+            font-size: 0.75rem;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .cal-cell:hover .cal-tooltip { display: block; }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 1rem;
+            justify-content: flex-end;
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+        .legend-cell {
+            width: 13px; height: 13px;
+            border-radius: 2px;
+        }
+
+        .problem-filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            border: 1px solid #30363d;
+            background: transparent;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: #58a6ff;
+            color: #fff;
+            border-color: #58a6ff;
+        }
+
+        .problem-list { max-height: 600px; overflow-y: auto; }
+        .problem-list::-webkit-scrollbar { width: 6px; }
+        .problem-list::-webkit-scrollbar-track { background: transparent; }
+        .problem-list::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+        .problem-item {
+            display: flex;
+            align-items: center;
+            padding: 0.6rem 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 2px;
+            transition: background 0.15s;
+            gap: 0.75rem;
+        }
+        .problem-item:hover { background: #1c2129; }
+        .problem-item.solved { opacity: 0.6; }
+        .check {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            border: 2px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+        .problem-item.solved .check {
+            background: #238636;
+            border-color: #238636;
+            color: #fff;
+        }
+        .problem-name { flex: 1; font-size: 0.9rem; }
+        .problem-rate {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .rate-hard { background: #da3633aa; color: #ffa198; }
+        .rate-mid { background: #d29922aa; color: #e3b341; }
+        .rate-easy { background: #238636aa; color: #56d364; }
+        .problem-date {
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+
+        @media (max-width: 640px) {
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .header-inner { flex-direction: column; gap: 0.5rem; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            <div class="header-left">
+                <div class="avatar">N</div>
+                <div class="header-info">
+                    <h1>nym</h1>
+                    <p>Programmers Lv.0 코딩테스트 입문</p>
+                </div>
+            </div>
+            <a href="../" class="back-link">&#8592; 대시보드</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="value" id="total-solved">0</div>
+                <div class="label">풀이 완료</div>
+            </div>
+            <div class="stat-card">
+                <div class="value streak" id="streak">0일</div>
+                <div class="label">연속 일수</div>
+            </div>
+            <div class="stat-card">
+                <div class="value rate" id="rate">0%</div>
+                <div class="label">진행률</div>
+            </div>
+            <div class="stat-card">
+                <div class="value today" id="today-count">0</div>
+                <div class="label">오늘 풀이</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>활동 기록</h2>
+            <div class="calendar-container">
+                <div class="calendar-months" id="cal-months"></div>
+                <div class="calendar-wrap">
+                    <div class="calendar-days">
+                        <span></span><span>월</span><span></span><span>수</span><span></span><span>금</span><span></span>
+                    </div>
+                    <div class="calendar" id="calendar"></div>
+                </div>
+            </div>
+            <div class="legend">
+                <span>적음</span>
+                <div class="legend-cell" style="background:#161b22;border:1px solid #1b2028"></div>
+                <div class="legend-cell" style="background:#0e4429"></div>
+                <div class="legend-cell" style="background:#006d32"></div>
+                <div class="legend-cell" style="background:#26a641"></div>
+                <div class="legend-cell" style="background:#39d353"></div>
+                <span>많음</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>문제 목록 <span id="solved-count" style="color:#8b949e;font-weight:400;font-size:0.9rem"></span></h2>
+            <div class="problem-filters">
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="unsolved">미풀이</button>
+                <button class="filter-btn" data-filter="solved">풀이 완료</button>
+            </div>
+            <div class="problem-list" id="problem-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const PROBLEMS = [
+            { name: "옹알이 (1)", rate: 38 },
+            { name: "평행", rate: 55 },
+            { name: "겹치는 선분의 길이", rate: 62 },
+            { name: "분수의 덧셈", rate: 63 },
+            { name: "안전지대", rate: 64 },
+            { name: "연속된 수의 합", rate: 67 },
+            { name: "다음에 올 숫자", rate: 68 },
+            { name: "최빈값 구하기", rate: 71 },
+            { name: "OX퀴즈", rate: 71 },
+            { name: "특이한 정렬", rate: 74 },
+            { name: "다항식 더하기", rate: 74 },
+            { name: "유한소수 판별하기", rate: 75 },
+            { name: "저주의 숫자 3", rate: 76 },
+            { name: "문자열 밀기", rate: 76 },
+            { name: "치킨 쿠폰", rate: 77 },
+            { name: "등수 매기기", rate: 77 },
+            { name: "외계어 사전", rate: 78 },
+            { name: "로그인 성공?", rate: 78 },
+            { name: "직사각형 넓이 구하기", rate: 78 },
+            { name: "캐릭터의 좌표", rate: 79 },
+            { name: "종이 자르기", rate: 79 },
+            { name: "모음이 싫어요", rate: 82 },
+            { name: "삼각형의 완성조건 (2)", rate: 82 },
+            { name: "구슬을 나누는 경우의 수", rate: 82 },
+            { name: "문자열 계산하기", rate: 83 },
+            { name: "공 던지기", rate: 83 },
+            { name: "이진수 더하기", rate: 83 },
+            { name: "소인수분해", rate: 84 },
+            { name: "잘라서 배열로 저장하기", rate: 85 },
+            { name: "컨트롤 제트", rate: 85 },
+            { name: "모스부호 (1)", rate: 86 },
+            { name: "A로 B 만들기", rate: 86 },
+            { name: "k의 개수", rate: 86 },
+            { name: "한 번만 등장한 문자", rate: 86 },
+            { name: "숨어있는 숫자의 덧셈 (2)", rate: 86 },
+            { name: "7의 개수", rate: 86 },
+            { name: "진료순서 정하기", rate: 86 },
+            { name: "가까운 수", rate: 86 },
+            { name: "팩토리얼", rate: 86 },
+            { name: "합성수 찾기", rate: 87 },
+            { name: "중복된 문자 제거", rate: 87 },
+            { name: "2차원으로 만들기", rate: 87 },
+            { name: "피자 나눠 먹기 (2)", rate: 88 },
+            { name: "외계행성의 나이", rate: 88 },
+            { name: "배열 회전시키기", rate: 88 },
+            { name: "중복된 숫자 개수", rate: 89 },
+            { name: "중앙값 구하기", rate: 89 },
+            { name: "옷가게 할인 받기", rate: 89 },
+            { name: "직각삼각형 출력하기", rate: 89 },
+            { name: "개미 군단", rate: 89 },
+            { name: "가위 바위 보", rate: 89 },
+            { name: "주사위의 개수", rate: 89 },
+            { name: "문자열 정렬하기 (1)", rate: 89 },
+            { name: "최댓값 만들기 (2)", rate: 89 },
+            { name: "암호 해독", rate: 89 },
+            { name: "인덱스 바꾸기", rate: 89 },
+            { name: "약수 구하기", rate: 89 },
+            { name: "문자열 정렬하기 (2)", rate: 89 },
+            { name: "숫자 찾기", rate: 89 },
+            { name: "369게임", rate: 89 }
+        ];
+
+        let progressData = {};
+        let solvedSet = new Set();
+        let solvedDateMap = {};
+
+        async function loadProgress() {
+            try {
+                const res = await fetch('progress.json');
+                if (!res.ok) return;
+                progressData = await res.json();
+                const solved = progressData.solved || {};
+                for (const [date, problems] of Object.entries(solved)) {
+                    problems.forEach(p => {
+                        solvedSet.add(p);
+                        solvedDateMap[p] = date;
+                    });
+                }
+            } catch {}
+        }
+
+        function getDayMap() {
+            const dayMap = {};
+            const solved = progressData.solved || {};
+            for (const [date, problems] of Object.entries(solved)) {
+                dayMap[date] = problems.length;
+            }
+            return dayMap;
+        }
+
+        function getStreak(dayMap) {
+            let streak = 0;
+            const d = new Date();
+            while (true) {
+                const key = d.toISOString().split('T')[0];
+                if (dayMap[key]) { streak++; d.setDate(d.getDate() - 1); }
+                else break;
+            }
+            return streak;
+        }
+
+        function renderStats() {
+            const dayMap = getDayMap();
+            const streak = getStreak(dayMap);
+            const today = new Date().toISOString().split('T')[0];
+            const todayCount = dayMap[today] || 0;
+
+            document.getElementById('total-solved').textContent = solvedSet.size;
+            document.getElementById('streak').textContent = streak + '일';
+            document.getElementById('rate').textContent = Math.round((solvedSet.size / PROBLEMS.length) * 100) + '%';
+            document.getElementById('today-count').textContent = todayCount;
+            document.getElementById('solved-count').textContent = `(${solvedSet.size}/${PROBLEMS.length})`;
+        }
+
+        function renderCalendar() {
+            const cal = document.getElementById('calendar');
+            const monthsEl = document.getElementById('cal-months');
+            const dayMap = getDayMap();
+            const today = new Date();
+            const totalWeeks = 20;
+            const totalDays = totalWeeks * 7;
+
+            const endDate = new Date(today);
+            const endDay = endDate.getDay();
+            endDate.setDate(endDate.getDate() + (6 - endDay));
+
+            const startDate = new Date(endDate);
+            startDate.setDate(startDate.getDate() - totalDays + 1);
+
+            let lastMonth = -1;
+            const monthLabels = [];
+
+            for (let i = 0; i < totalDays; i++) {
+                const d = new Date(startDate);
+                d.setDate(d.getDate() + i);
+                const key = d.toISOString().split('T')[0];
+                const isFuture = d > today;
+                const count = dayMap[key] || 0;
+
+                const cell = document.createElement('div');
+                cell.className = 'cal-cell';
+                if (isFuture) { cell.classList.add('future'); }
+                else if (count >= 4) cell.classList.add('lv4');
+                else if (count >= 3) cell.classList.add('lv3');
+                else if (count >= 2) cell.classList.add('lv2');
+                else if (count >= 1) cell.classList.add('lv1');
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'cal-tooltip';
+                tooltip.textContent = isFuture ? key : `${key}: ${count}문제`;
+                cell.appendChild(tooltip);
+                cal.appendChild(cell);
+
+                if (d.getDay() === 0 && d.getMonth() !== lastMonth) {
+                    const weekIdx = Math.floor(i / 7);
+                    monthLabels.push({ month: d.getMonth(), pos: weekIdx });
+                    lastMonth = d.getMonth();
+                }
+            }
+
+            const monthNames = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+            monthLabels.forEach(m => {
+                const span = document.createElement('span');
+                span.textContent = monthNames[m.month];
+                span.style.marginLeft = (m.pos * 18) + 'px';
+                monthsEl.appendChild(span);
+            });
+        }
+
+        function rateClass(rate) {
+            if (rate < 70) return 'rate-hard';
+            if (rate < 85) return 'rate-mid';
+            return 'rate-easy';
+        }
+
+        function renderProblems(filter = 'all') {
+            const list = document.getElementById('problem-list');
+            list.innerHTML = '';
+
+            PROBLEMS.forEach((p, i) => {
+                const isSolved = solvedSet.has(p.name);
+                if (filter === 'solved' && !isSolved) return;
+                if (filter === 'unsolved' && isSolved) return;
+
+                const div = document.createElement('div');
+                div.className = 'problem-item' + (isSolved ? ' solved' : '');
+                div.innerHTML = `
+                    <div class="check">${isSolved ? '&#10003;' : ''}</div>
+                    <span class="problem-name">${i + 1}. ${p.name}</span>
+                    <span class="problem-rate ${rateClass(p.rate)}">${p.rate}%</span>
+                    ${isSolved && solvedDateMap[p.name] ? `<span class="problem-date">${solvedDateMap[p.name]}</span>` : ''}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function setupFilters() {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderProblems(btn.dataset.filter);
+                });
+            });
+        }
+
+        async function init() {
+            await loadProgress();
+            renderStats();
+            renderCalendar();
+            renderProblems();
+            setupFilters();
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,483 +1,302 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>jjw - 코딩테스트 진행 현황</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0d1117;
-            color: #e6edf3;
-            min-height: 100vh;
-        }
-        a { color: #58a6ff; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-
-        .header {
-            background: linear-gradient(135deg, #161b22 0%, #1b2d33 100%);
-            border-bottom: 1px solid #30363d;
-            padding: 1.5rem 0;
-        }
-        .header-inner {
-            max-width: 1000px; margin: 0 auto; padding: 0 1rem;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .header-left { display: flex; align-items: center; gap: 1rem; }
-        .avatar {
-            width: 56px; height: 56px; border-radius: 50%;
-            background: linear-gradient(135deg, #56d364, #58a6ff);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem; font-weight: 700;
-        }
-        .header-info h1 { font-size: 1.5rem; font-weight: 700; }
-        .header-info p { color: #8b949e; font-size: 0.9rem; }
-        .back-link { color: #8b949e; font-size: 0.9rem; }
-
-        .container { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem; }
-
-        .today-banner {
-            background: linear-gradient(135deg, #1f2a48, #1b2d33);
-            border: 1px solid #30363d;
-            border-radius: 12px;
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .today-date { font-size: 1.3rem; font-weight: 700; }
-        .today-date span { color: #58a6ff; }
-        .today-badge {
-            background: #238636;
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .stat-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr);
-            gap: 1rem; margin-bottom: 1.5rem;
-        }
-        .stat-card {
-            background: #161b22; border: 1px solid #30363d;
-            border-radius: 10px; padding: 1.25rem; text-align: center;
-        }
-        .stat-card .value { font-size: 2rem; font-weight: 700; color: #58a6ff; }
-        .stat-card .value.streak { color: #f0883e; }
-        .stat-card .value.rate { color: #56d364; }
-        .stat-card .value.today { color: #58a6ff; }
-        .stat-card .label { color: #8b949e; font-size: 0.8rem; margin-top: 0.25rem; }
-
-        .section {
-            background: #161b22; border: 1px solid #30363d;
-            border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;
-        }
-        .section h2 {
-            font-size: 1.1rem; margin-bottom: 1rem;
-            display: flex; align-items: center; gap: 0.5rem;
-        }
-
-        .calendar-container { overflow-x: auto; }
-        .calendar-wrap { display: flex; gap: 0; }
-        .calendar-days {
-            display: flex; flex-direction: column; gap: 3px;
-            margin-right: 6px; padding-top: 2px;
-        }
-        .calendar-days span {
-            font-size: 0.7rem; color: #8b949e;
-            height: 15px; line-height: 15px; width: 28px; text-align: right;
-        }
-        .calendar {
-            display: grid; grid-template-rows: repeat(7, 1fr);
-            grid-auto-flow: column; gap: 3px;
-        }
-        .cal-cell {
-            width: 15px; height: 15px; border-radius: 3px;
-            background: #161b22; border: 1px solid #1b2028;
-            cursor: pointer; position: relative;
-        }
-        .cal-cell:hover { border-color: #58a6ff; }
-        .cal-cell.lv1 { background: #0e4429; border-color: #0e4429; }
-        .cal-cell.lv2 { background: #006d32; border-color: #006d32; }
-        .cal-cell.lv3 { background: #26a641; border-color: #26a641; }
-        .cal-cell.lv4 { background: #39d353; border-color: #39d353; }
-        .cal-cell.future { background: #0d1117; border-color: transparent; }
-        .cal-tooltip {
-            display: none; position: absolute; bottom: calc(100% + 8px);
-            left: 50%; transform: translateX(-50%);
-            background: #2d333b; color: #e6edf3; font-size: 0.75rem;
-            padding: 6px 10px; border-radius: 6px; white-space: nowrap;
-            z-index: 10; pointer-events: none;
-        }
-        .cal-cell:hover .cal-tooltip { display: block; }
-        .legend {
-            display: flex; align-items: center; gap: 4px;
-            margin-top: 1rem; justify-content: flex-end;
-            font-size: 0.75rem; color: #8b949e;
-        }
-        .legend-cell { width: 13px; height: 13px; border-radius: 2px; }
-
-        .problem-filters {
-            display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;
-        }
-        .filter-btn {
-            padding: 0.4rem 0.8rem; border-radius: 20px;
-            border: 1px solid #30363d; background: transparent;
-            color: #8b949e; cursor: pointer; font-size: 0.8rem; transition: all 0.2s;
-        }
-        .filter-btn:hover, .filter-btn.active {
-            background: #58a6ff; color: #fff; border-color: #58a6ff;
-        }
-        .problem-list { max-height: 600px; overflow-y: auto; }
-        .problem-list::-webkit-scrollbar { width: 6px; }
-        .problem-list::-webkit-scrollbar-track { background: transparent; }
-        .problem-list::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
-        .problem-item {
-            display: flex; align-items: center; padding: 0.6rem 0.75rem;
-            border-radius: 8px; margin-bottom: 2px; transition: background 0.15s; gap: 0.75rem;
-        }
-        .problem-item:hover { background: #1c2129; }
-        .problem-item.solved { opacity: 0.6; }
-        .check {
-            width: 22px; height: 22px; border-radius: 50%;
-            border: 2px solid #30363d; display: flex; align-items: center;
-            justify-content: center; flex-shrink: 0; font-size: 0.75rem;
-        }
-        .problem-item.solved .check {
-            background: #238636; border-color: #238636; color: #fff;
-        }
-        .problem-name { flex: 1; font-size: 0.9rem; }
-        .problem-file { font-size: 0.75rem; color: #8b949e; font-family: monospace; }
-        .problem-rate {
-            font-size: 0.8rem; padding: 0.2rem 0.6rem;
-            border-radius: 12px; font-weight: 600;
-        }
-        .rate-hard { background: #da3633aa; color: #ffa198; }
-        .rate-mid { background: #d29922aa; color: #e3b341; }
-        .rate-easy { background: #238636aa; color: #56d364; }
-
-        .loading {
-            text-align: center; padding: 2rem; color: #8b949e;
-        }
-        .loading .spinner {
-            display: inline-block; width: 20px; height: 20px;
-            border: 2px solid #30363d; border-top-color: #58a6ff;
-            border-radius: 50%; animation: spin 0.8s linear infinite;
-            margin-right: 0.5rem; vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        @media (max-width: 640px) {
-            .stat-grid { grid-template-columns: repeat(2, 1fr); }
-            .header-inner { flex-direction: column; gap: 0.5rem; text-align: center; }
-            .today-banner { flex-direction: column; gap: 0.5rem; text-align: center; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JJW - 코딩테스트 풀이 제출</title>
+  <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
+  <div class="container">
+    <a href="../index.html" class="back-link">&larr; 대시보드로 돌아가기</a>
+
     <div class="header">
-        <div class="header-inner">
-            <div class="header-left">
-                <div class="avatar">J</div>
-                <div class="header-info">
-                    <h1>jjw</h1>
-                    <p>Programmers Lv.0 코딩테스트 입문</p>
-                </div>
-            </div>
-            <a href="../" class="back-link">&#8592; 대시보드</a>
-        </div>
+      <div class="avatar" style="background:#58a6ff; width:56px; height:56px; font-size:24px; margin:0 auto 12px;">J</div>
+      <h1>JJW</h1>
+      <p>프로그래머스 Lv.0 풀이 제출</p>
     </div>
 
-    <div class="container">
-        <div class="today-banner">
-            <div class="today-date" id="today-date"></div>
-            <div class="today-badge" id="today-badge">불러오는 중...</div>
-        </div>
-
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="value" id="total-solved">-</div>
-                <div class="label">풀이 완료</div>
-            </div>
-            <div class="stat-card">
-                <div class="value streak" id="streak">-</div>
-                <div class="label">연속 일수</div>
-            </div>
-            <div class="stat-card">
-                <div class="value rate" id="rate">-</div>
-                <div class="label">진행률</div>
-            </div>
-            <div class="stat-card">
-                <div class="value today" id="remaining">-</div>
-                <div class="label">남은 문제</div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>활동 기록</h2>
-            <div class="calendar-container">
-                <div class="calendar-wrap">
-                    <div class="calendar-days">
-                        <span></span><span>월</span><span></span><span>수</span><span></span><span>금</span><span></span>
-                    </div>
-                    <div class="calendar" id="calendar"></div>
-                </div>
-            </div>
-            <div class="legend">
-                <span>적음</span>
-                <div class="legend-cell" style="background:#161b22;border:1px solid #1b2028"></div>
-                <div class="legend-cell" style="background:#0e4429"></div>
-                <div class="legend-cell" style="background:#006d32"></div>
-                <div class="legend-cell" style="background:#26a641"></div>
-                <div class="legend-cell" style="background:#39d353"></div>
-                <span>많음</span>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>문제 목록 <span id="solved-count" style="color:#8b949e;font-weight:400;font-size:0.9rem"></span></h2>
-            <div class="problem-filters">
-                <button class="filter-btn active" data-filter="all">전체</button>
-                <button class="filter-btn" data-filter="unsolved">미풀이</button>
-                <button class="filter-btn" data-filter="solved">풀이 완료</button>
-            </div>
-            <div class="problem-list" id="problem-list">
-                <div class="loading"><span class="spinner"></span>GitHub에서 파일 목록을 불러오는 중...</div>
-            </div>
-        </div>
+    <!-- 폴더 연결 -->
+    <div class="section" id="folder-section">
+      <h2>저장 폴더 연결</h2>
+      <p style="color:#8b949e; font-size:14px; margin-bottom:12px;">
+        제출 데이터를 저장할 폴더를 선택하세요. (브라우저 당 최초 1회)
+      </p>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-connect-folder">폴더 선택</button>
+      </div>
+      <div class="folder-status" id="folder-status"></div>
     </div>
 
-    <script>
-        const OWNER = 'youmn327';
-        const REPO = 'CD_test';
-        const FOLDER = 'jjw';
+    <!-- 제출 폼 -->
+    <div class="section">
+      <h2>풀이 제출</h2>
 
-        const PROBLEMS = [
-            { name: "옹알이 (1)", file: "q01_babbling1", rate: 38 },
-            { name: "평행", file: "q02_parallel", rate: 55 },
-            { name: "겹치는 선분의 길이", file: "q03_overlapping_segments", rate: 62 },
-            { name: "분수의 덧셈", file: "q04_fraction_addition", rate: 63 },
-            { name: "안전지대", file: "q05_safe_zone", rate: 64 },
-            { name: "연속된 수의 합", file: "q06_consecutive_sum", rate: 67 },
-            { name: "다음에 올 숫자", file: "q07_next_number", rate: 68 },
-            { name: "최빈값 구하기", file: "q08_find_mode", rate: 71 },
-            { name: "OX퀴즈", file: "q09_ox_quiz", rate: 71 },
-            { name: "특이한 정렬", file: "q10_unusual_sort", rate: 74 },
-            { name: "다항식 더하기", file: "q11_polynomial_addition", rate: 74 },
-            { name: "유한소수 판별하기", file: "q12_finite_decimal", rate: 75 },
-            { name: "저주의 숫자 3", file: "q13_cursed_number3", rate: 76 },
-            { name: "문자열 밀기", file: "q14_string_shift", rate: 76 },
-            { name: "치킨 쿠폰", file: "q15_chicken_coupon", rate: 77 },
-            { name: "등수 매기기", file: "q16_ranking", rate: 77 },
-            { name: "외계어 사전", file: "q17_alien_dictionary", rate: 78 },
-            { name: "로그인 성공?", file: "q18_login_success", rate: 78 },
-            { name: "직사각형 넓이 구하기", file: "q19_rectangle_area", rate: 78 },
-            { name: "캐릭터의 좌표", file: "q20_character_coordinate", rate: 79 },
-            { name: "종이 자르기", file: "q21_paper_cutting", rate: 79 },
-            { name: "모음이 싫어요", file: "q22_remove_vowels", rate: 82 },
-            { name: "삼각형의 완성조건 (2)", file: "q23_triangle_condition2", rate: 82 },
-            { name: "구슬을 나누는 경우의 수", file: "q24_marble_combinations", rate: 82 },
-            { name: "문자열 계산하기", file: "q25_string_calculation", rate: 83 },
-            { name: "공 던지기", file: "q26_ball_throwing", rate: 83 },
-            { name: "이진수 더하기", file: "q27_binary_addition", rate: 83 },
-            { name: "소인수분해", file: "q28_prime_factorization", rate: 84 },
-            { name: "잘라서 배열로 저장하기", file: "q29_slice_to_array", rate: 85 },
-            { name: "컨트롤 제트", file: "q30_ctrl_z", rate: 85 },
-            { name: "모스부호 (1)", file: "q31_morse_code1", rate: 86 },
-            { name: "A로 B 만들기", file: "q32_make_b_from_a", rate: 86 },
-            { name: "k의 개수", file: "q33_count_k", rate: 86 },
-            { name: "한 번만 등장한 문자", file: "q34_unique_char", rate: 86 },
-            { name: "숨어있는 숫자의 덧셈 (2)", file: "q35_hidden_number_sum2", rate: 86 },
-            { name: "7의 개수", file: "q36_count_seven", rate: 86 },
-            { name: "진료순서 정하기", file: "q37_medical_order", rate: 86 },
-            { name: "가까운 수", file: "q38_closest_number", rate: 86 },
-            { name: "팩토리얼", file: "q39_factorial", rate: 86 },
-            { name: "합성수 찾기", file: "q40_find_composite", rate: 87 },
-            { name: "중복된 문자 제거", file: "q41_remove_duplicates", rate: 87 },
-            { name: "2차원으로 만들기", file: "q42_make_2d_array", rate: 87 },
-            { name: "피자 나눠 먹기 (2)", file: "q43_sharing_pizza2", rate: 88 },
-            { name: "외계행성의 나이", file: "q44_alien_planet_age", rate: 88 },
-            { name: "배열 회전시키기", file: "q45_rotate_array", rate: 88 },
-            { name: "중복된 숫자 개수", file: "q46_count_duplicates", rate: 89 },
-            { name: "중앙값 구하기", file: "q47_find_median", rate: 89 },
-            { name: "옷가게 할인 받기", file: "q48_clothing_discount", rate: 89 },
-            { name: "직각삼각형 출력하기", file: "q49_right_triangle", rate: 89 },
-            { name: "개미 군단", file: "q50_ant_army", rate: 89 },
-            { name: "가위 바위 보", file: "q51_rock_paper_scissors", rate: 89 },
-            { name: "주사위의 개수", file: "q52_count_dice", rate: 89 },
-            { name: "문자열 정렬하기 (1)", file: "q53_sort_string1", rate: 89 },
-            { name: "최댓값 만들기 (2)", file: "q54_max_product2", rate: 89 },
-            { name: "암호 해독", file: "q55_decode_cipher", rate: 89 },
-            { name: "인덱스 바꾸기", file: "q56_swap_index", rate: 89 },
-            { name: "약수 구하기", file: "q57_find_divisors", rate: 89 },
-            { name: "문자열 정렬하기 (2)", file: "q58_sort_string2", rate: 89 },
-            { name: "숫자 찾기", file: "q59_find_number", rate: 89 },
-            { name: "369게임", file: "q60_369_game", rate: 89 }
-        ];
+      <div class="form-group">
+        <label for="problem-select">문제 선택</label>
+        <select id="problem-select">
+          <option value="">-- 문제를 선택하세요 --</option>
+        </select>
+      </div>
 
-        // --- Date ---
-        function showDate() {
-            const now = new Date();
-            const y = now.getFullYear();
-            const m = now.getMonth() + 1;
-            const d = now.getDate();
-            const days = ['일', '월', '화', '수', '목', '금', '토'];
-            const day = days[now.getDay()];
-            document.getElementById('today-date').innerHTML =
-                `<span>${y}년 ${m}월 ${d}일</span> ${day}요일`;
+      <div class="form-group">
+        <label for="code-input">풀이 코드</label>
+        <textarea id="code-input" class="code-textarea" placeholder="풀이 코드를 입력하세요..." spellcheck="false"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="submit-date">제출 날짜</label>
+        <input type="text" id="submit-date" readonly>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btn-submit">업로드</button>
+        <button class="btn btn-secondary" id="btn-export">JSON 내보내기</button>
+      </div>
+
+      <div class="json-output" id="json-output"></div>
+    </div>
+
+    <!-- 제출 기록 -->
+    <div class="section">
+      <h2>제출 기록 (<span id="history-count">0</span>건)</h2>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/storage.js"></script>
+  <script>
+    const CURRENT_MEMBER = 'jjw';
+    const FILE_NAME = 'submissions.json';
+    let dirHandle = null;
+
+    initPage();
+
+    function initPage() {
+      populateProblems();
+      setTodayDate();
+      loadFromFile().then(() => renderHistory());
+
+      document.getElementById('btn-connect-folder').addEventListener('click', connectFolder);
+      document.getElementById('btn-submit').addEventListener('click', handleSubmit);
+      document.getElementById('btn-export').addEventListener('click', handleExport);
+    }
+
+    // === File System Access API ===
+    async function connectFolder() {
+      try {
+        dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        updateFolderStatus(true);
+        showToast('폴더가 연결되었습니다!');
+        await loadFromFile();
+        renderHistory();
+      } catch (e) {
+        if (e.name !== 'AbortError') showToast('폴더 연결에 실패했습니다.', 'error');
+      }
+    }
+
+    function updateFolderStatus(connected) {
+      const el = document.getElementById('folder-status');
+      if (connected) {
+        el.innerHTML = `<span style="color:#7ee787;">&#10003; 폴더 연결됨: ${dirHandle.name}/</span>`;
+      } else {
+        el.innerHTML = '<span style="color:#8b949e;">연결된 폴더 없음</span>';
+      }
+    }
+
+    async function readFileFromDir() {
+      if (!dirHandle) return null;
+      try {
+        const fileHandle = await dirHandle.getFileHandle(FILE_NAME);
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        return JSON.parse(text);
+      } catch {
+        return []; // 파일이 없으면 빈 배열
+      }
+    }
+
+    async function writeFileToDir(data) {
+      if (!dirHandle) return false;
+      try {
+        const fileHandle = await dirHandle.getFileHandle(FILE_NAME, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(data, null, 2));
+        await writable.close();
+        return true;
+      } catch (e) {
+        showToast('파일 저장 실패: ' + e.message, 'error');
+        return false;
+      }
+    }
+
+    async function loadFromFile() {
+      if (!dirHandle) return;
+      const data = await readFileFromDir();
+      if (data && data.length > 0) {
+        // 파일 데이터를 localStorage에 동기화
+        const existing = Storage.getAll();
+        const existingKeys = new Set(existing.map(s => `${s.member}-${s.problemId}-${s.date}`));
+        let added = 0;
+        data.forEach(s => {
+          const key = `${s.member}-${s.problemId}-${s.date}`;
+          if (!existingKeys.has(key)) {
+            Storage.add(s);
+            added++;
+          }
+        });
+        if (added > 0) showToast(`파일에서 ${added}건 불러옴`);
+      }
+      // 드롭다운 갱신
+      refreshDropdown();
+    }
+
+    // === 제출 처리 ===
+    async function handleSubmit() {
+      const problemId = document.getElementById('problem-select').value;
+      const code = document.getElementById('code-input').value.trim();
+      const date = document.getElementById('submit-date').dataset.iso;
+
+      if (!problemId) return showToast('문제를 선택하세요.', 'error');
+      if (!code) return showToast('코드를 입력하세요.', 'error');
+
+      const problem = CONFIG.PROBLEMS.find(p => p.id === problemId);
+
+      const submission = {
+        member: CURRENT_MEMBER,
+        problemId: problem.id,
+        problemName: problem.name,
+        code: code,
+        date: date,
+      };
+
+      // localStorage 저장
+      Storage.add(submission);
+
+      // 폴더에 파일 저장
+      if (dirHandle) {
+        const all = Storage.getByMember(CURRENT_MEMBER);
+        const saved = await writeFileToDir(all);
+        if (saved) {
+          showToast(`${problem.name} 제출 완료! 파일에 저장됨`);
         }
+      } else {
+        showToast(`${problem.name} 제출 완료! (폴더 미연결 - localStorage에만 저장)`);
+      }
 
-        // --- GitHub API: list files ---
-        async function fetchFiles() {
-            try {
-                const res = await fetch(
-                    `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FOLDER}?ref=main`
-                );
-                if (!res.ok) return [];
-                const data = await res.json();
-                return data
-                    .filter(f => f.type === 'file' && f.name !== 'index.html' && f.name !== 'progress.json')
-                    .map(f => f.name);
-            } catch { return []; }
-        }
+      document.getElementById('code-input').value = '';
+      document.getElementById('problem-select').value = '';
+      refreshDropdown();
+      renderHistory();
+    }
 
-        // --- GitHub API: get commit dates for folder ---
-        async function fetchCommitDates() {
-            try {
-                const res = await fetch(
-                    `https://api.github.com/repos/${OWNER}/${REPO}/commits?path=${FOLDER}&per_page=100`
-                );
-                if (!res.ok) return {};
-                const commits = await res.json();
-                const dayMap = {};
-                for (const c of commits) {
-                    const date = c.commit.author.date.split('T')[0];
-                    dayMap[date] = (dayMap[date] || 0) + 1;
-                }
-                return dayMap;
-            } catch { return {}; }
-        }
+    function handleExport() {
+      const submissions = Storage.getByMember(CURRENT_MEMBER);
+      const json = JSON.stringify(submissions, null, 2);
+      const el = document.getElementById('json-output');
+      el.textContent = json;
+      el.classList.toggle('show');
 
-        // --- Match files to problems ---
-        function matchSolved(fileNames) {
-            const solvedSet = new Set();
-            for (const p of PROBLEMS) {
-                const prefix = p.file.split('_')[0]; // q01, q02, ...
-                if (fileNames.some(f => f.startsWith(prefix + '_') || f.startsWith(prefix + '.'))) {
-                    solvedSet.add(p.file);
-                }
-            }
-            return solvedSet;
-        }
+      if (el.classList.contains('show')) {
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${CURRENT_MEMBER}_submissions.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('JSON 파일이 다운로드됩니다.');
+      }
+    }
 
-        // --- Render ---
-        function renderStats(solvedCount) {
-            document.getElementById('total-solved').textContent = solvedCount;
-            document.getElementById('rate').textContent =
-                Math.round((solvedCount / PROBLEMS.length) * 100) + '%';
-            document.getElementById('remaining').textContent =
-                PROBLEMS.length - solvedCount;
-            document.getElementById('today-badge').textContent =
-                solvedCount > 0 ? `${solvedCount}문제 완료` : '아직 0문제';
-        }
+    // === UI ===
+    function populateProblems() {
+      const select = document.getElementById('problem-select');
+      CONFIG.PROBLEMS.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        const done = Storage.isSubmitted(CURRENT_MEMBER, p.id);
+        opt.textContent = `${done ? '\u2713 ' : ''}${p.id} - ${p.name} (${p.rate}%)`;
+        if (done) opt.style.color = '#7ee787';
+        select.appendChild(opt);
+      });
+    }
 
-        function renderStreak(dayMap) {
-            let streak = 0;
-            const d = new Date();
-            while (true) {
-                const key = d.toISOString().split('T')[0];
-                if (dayMap[key]) { streak++; d.setDate(d.getDate() - 1); }
-                else break;
-            }
-            document.getElementById('streak').textContent = streak + '일';
-        }
+    function refreshDropdown() {
+      const select = document.getElementById('problem-select');
+      select.innerHTML = '<option value="">-- 문제를 선택하세요 --</option>';
+      populateProblems();
+    }
 
-        function renderCalendar(dayMap) {
-            const cal = document.getElementById('calendar');
-            const today = new Date();
-            const totalWeeks = 20;
-            const totalDays = totalWeeks * 7;
-            const endDate = new Date(today);
-            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-            const startDate = new Date(endDate);
-            startDate.setDate(startDate.getDate() - totalDays + 1);
+    function setTodayDate() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      document.getElementById('submit-date').value = `${y}-${m}-${d} (${days[now.getDay()]}요일)`;
+      document.getElementById('submit-date').dataset.iso = `${y}-${m}-${d}`;
+    }
 
-            for (let i = 0; i < totalDays; i++) {
-                const d = new Date(startDate);
-                d.setDate(d.getDate() + i);
-                const key = d.toISOString().split('T')[0];
-                const isFuture = d > today;
-                const count = dayMap[key] || 0;
-                const cell = document.createElement('div');
-                cell.className = 'cal-cell';
-                if (isFuture) cell.classList.add('future');
-                else if (count >= 4) cell.classList.add('lv4');
-                else if (count >= 3) cell.classList.add('lv3');
-                else if (count >= 2) cell.classList.add('lv2');
-                else if (count >= 1) cell.classList.add('lv1');
-                const tooltip = document.createElement('div');
-                tooltip.className = 'cal-tooltip';
-                tooltip.textContent = isFuture ? key : `${key}: ${count}커밋`;
-                cell.appendChild(tooltip);
-                cal.appendChild(cell);
-            }
-        }
+    function renderHistory() {
+      const list = document.getElementById('history-list');
+      const submissions = Storage.getByMember(CURRENT_MEMBER).reverse();
+      document.getElementById('history-count').textContent = submissions.length;
 
-        function rateClass(rate) {
-            if (rate < 70) return 'rate-hard';
-            if (rate < 85) return 'rate-mid';
-            return 'rate-easy';
-        }
+      if (submissions.length === 0) {
+        list.innerHTML = '<div class="history-empty">아직 제출한 풀이가 없습니다.</div>';
+        return;
+      }
 
-        function renderProblems(solvedSet, filter = 'all') {
-            const list = document.getElementById('problem-list');
-            list.innerHTML = '';
-            PROBLEMS.forEach((p, i) => {
-                const isSolved = solvedSet.has(p.file);
-                if (filter === 'solved' && !isSolved) return;
-                if (filter === 'unsolved' && isSolved) return;
-                const div = document.createElement('div');
-                div.className = 'problem-item' + (isSolved ? ' solved' : '');
-                div.innerHTML = `
-                    <div class="check">${isSolved ? '&#10003;' : ''}</div>
-                    <span class="problem-name">${i + 1}. ${p.name}</span>
-                    <span class="problem-file">${p.file}</span>
-                    <span class="problem-rate ${rateClass(p.rate)}">${p.rate}%</span>
-                `;
-                list.appendChild(div);
-            });
-            document.getElementById('solved-count').textContent =
-                `(${solvedSet.size}/${PROBLEMS.length})`;
-        }
+      list.innerHTML = submissions.map(s => `
+        <div class="history-entry">
+          <div class="history-item" onclick="toggleCode('${s.timestamp}')">
+            <div class="history-info">
+              <div class="history-problem">${s.problemId} - ${s.problemName}</div>
+              <div class="history-date">${s.date}</div>
+            </div>
+            <div class="history-actions">
+              <span class="history-toggle" id="toggle-${s.timestamp}">&#9654;</span>
+              <button class="btn btn-danger" onclick="event.stopPropagation(); removeSubmission('${s.timestamp}')">삭제</button>
+            </div>
+          </div>
+          <pre class="history-code" id="code-${s.timestamp}">${escapeHtml(s.code)}</pre>
+        </div>
+      `).join('');
+    }
 
-        function setupFilters(solvedSet) {
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    renderProblems(solvedSet, btn.dataset.filter);
-                });
-            });
-        }
+    function toggleCode(timestamp) {
+      const code = document.getElementById('code-' + timestamp);
+      const toggle = document.getElementById('toggle-' + timestamp);
+      const isOpen = code.classList.toggle('show');
+      toggle.innerHTML = isOpen ? '&#9660;' : '&#9654;';
+    }
 
-        async function init() {
-            showDate();
-            const [fileNames, dayMap] = await Promise.all([
-                fetchFiles(),
-                fetchCommitDates()
-            ]);
-            const solvedSet = matchSolved(fileNames);
-            renderStats(solvedSet.size);
-            renderStreak(dayMap);
-            renderCalendar(dayMap);
-            renderProblems(solvedSet);
-            setupFilters(solvedSet);
-        }
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
-        init();
-    </script>
+    async function removeSubmission(timestamp) {
+      Storage.remove(timestamp);
+      if (dirHandle) {
+        const all = Storage.getByMember(CURRENT_MEMBER);
+        await writeFileToDir(all);
+      }
+      refreshDropdown();
+      renderHistory();
+      showToast('삭제되었습니다.');
+    }
+
+    function showToast(msg, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast' + (type === 'error' ? ' error' : '');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+  </script>
 </body>
 </html>

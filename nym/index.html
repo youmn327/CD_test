@@ -45,6 +45,20 @@
       </div>
 
       <div class="form-group">
+        <label for="image-input">스크린샷 첨부 (선택)</label>
+        <div class="image-upload-area" id="image-upload-area">
+          <input type="file" id="image-input" accept="image/*" style="display:none;">
+          <div class="image-placeholder" id="image-placeholder" onclick="document.getElementById('image-input').click()">
+            클릭, 드래그, 또는 Ctrl+V로 이미지를 붙여넣으세요
+          </div>
+          <div class="image-preview-wrap" id="image-preview-wrap" style="display:none;">
+            <img id="image-preview" class="image-preview">
+            <button class="btn btn-danger" onclick="clearImage()" style="margin-top:8px;">이미지 제거</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
         <label for="submit-date">제출 날짜</label>
         <input type="text" id="submit-date" readonly>
       </div>
@@ -72,17 +86,69 @@
     const CURRENT_MEMBER = 'nym';
     const FILE_NAME = 'submissions.json';
     let dirHandle = null;
+    let imageBase64 = null;
 
     initPage();
 
     function initPage() {
       populateProblems();
       setTodayDate();
+      setupImageUpload();
       loadFromFile().then(() => renderHistory());
 
       document.getElementById('btn-connect-folder').addEventListener('click', connectFolder);
       document.getElementById('btn-submit').addEventListener('click', handleSubmit);
       document.getElementById('btn-export').addEventListener('click', handleExport);
+    }
+
+    // === 이미지 업로드 ===
+    function setupImageUpload() {
+      const input = document.getElementById('image-input');
+      const area = document.getElementById('image-upload-area');
+
+      input.addEventListener('change', (e) => {
+        if (e.target.files[0]) processImage(e.target.files[0]);
+      });
+
+      area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('drag-over'); });
+      area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+      area.addEventListener('drop', (e) => {
+        e.preventDefault();
+        area.classList.remove('drag-over');
+        if (e.dataTransfer.files[0]) processImage(e.dataTransfer.files[0]);
+      });
+
+      // Ctrl+V 붙여넣기
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            e.preventDefault();
+            processImage(item.getAsFile());
+            break;
+          }
+        }
+      });
+    }
+
+    function processImage(file) {
+      if (!file.type.startsWith('image/')) return showToast('이미지 파일만 가능합니다.', 'error');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imageBase64 = e.target.result;
+        document.getElementById('image-preview').src = imageBase64;
+        document.getElementById('image-preview-wrap').style.display = 'block';
+        document.getElementById('image-placeholder').style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      imageBase64 = null;
+      document.getElementById('image-input').value = '';
+      document.getElementById('image-preview-wrap').style.display = 'none';
+      document.getElementById('image-placeholder').style.display = 'block';
     }
 
     // === File System Access API ===
@@ -169,9 +235,11 @@
         problemName: problem.name,
         code: code,
         date: date,
+        image: imageBase64 || null,
       };
 
       Storage.add(submission);
+      clearImage();
 
       if (dirHandle) {
         const all = Storage.getByMember(CURRENT_MEMBER);
@@ -251,7 +319,9 @@
         <div class="history-entry">
           <div class="history-item" onclick="toggleCode('${s.timestamp}')">
             <div class="history-info">
-              <div class="history-problem">${s.problemId} - ${s.problemName}</div>
+              <div class="history-problem">
+                ${s.image ? '<span class="badge-img">IMG</span> ' : ''}${s.problemId} - ${s.problemName}
+              </div>
               <div class="history-date">${s.date}</div>
             </div>
             <div class="history-actions">
@@ -259,16 +329,27 @@
               <button class="btn btn-danger" onclick="event.stopPropagation(); removeSubmission('${s.timestamp}')">삭제</button>
             </div>
           </div>
-          <pre class="history-code" id="code-${s.timestamp}">${escapeHtml(s.code)}</pre>
+          <div class="history-detail" id="code-${s.timestamp}">
+            <pre class="history-code-block">${escapeHtml(s.code)}</pre>
+            ${s.image ? `<img src="${s.image}" class="history-image" onclick="openImageModal(this.src)">` : ''}
+          </div>
         </div>
       `).join('');
     }
 
     function toggleCode(timestamp) {
-      const code = document.getElementById('code-' + timestamp);
+      const detail = document.getElementById('code-' + timestamp);
       const toggle = document.getElementById('toggle-' + timestamp);
-      const isOpen = code.classList.toggle('show');
+      const isOpen = detail.classList.toggle('show');
       toggle.innerHTML = isOpen ? '&#9660;' : '&#9654;';
+    }
+
+    function openImageModal(src) {
+      const modal = document.createElement('div');
+      modal.className = 'image-modal';
+      modal.innerHTML = `<img src="${src}"><div class="image-modal-close" onclick="this.parentElement.remove()">&#10005;</div>`;
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+      document.body.appendChild(modal);
     }
 
     function escapeHtml(str) {

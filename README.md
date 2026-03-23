@@ -62,9 +62,7 @@ const CURRENT_MEMBER = 'abc';  // 이 부분만 변경
 
 ---
 
-## GitHub Pages 배포 방법
-
-### 1. 변경사항 커밋 & 푸시
+## 1. 변경사항 커밋 & 푸시
 
 ```bash
 cd D:/code/CD_test

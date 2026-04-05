@@ -21,9 +21,11 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
 
-  const todayISO = new Date().toISOString().slice(0, 10);
+  // 한국 시간 기준 날짜
+  const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const days = ['일', '월', '화', '수', '목', '금', '토'];
-  const todayDisplay = `${todayISO} (${days[new Date().getDay()]}요일)`;
+  const todayDisplay = `${todayISO} (${days[now.getDay()]}요일)`;
 
   // 이미지 붙여넣기
   useEffect(() => {

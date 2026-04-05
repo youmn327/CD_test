@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const members = await getMembers();
     const memberInfo = members.find(m => m.id === member);
     const subs = await getSubmissionsByMember(member);
-    await backupMemberData(member, { member: memberInfo, submissions: subs });
+    await backupMemberData(member, { member: memberInfo || { id: member }, submissions: subs });
   } catch (e) {
     console.warn('GitHub 백업 실패:', e);
   }
@@ -50,7 +50,7 @@ export async function DELETE(req: NextRequest) {
       const members = await getMembers();
       const memberInfo = members.find(m => m.id === memberId);
       const subs = await getSubmissionsByMember(memberId);
-      await backupMemberData(memberId, { member: memberInfo, submissions: subs });
+      await backupMemberData(memberId, { member: memberInfo || { id: memberId }, submissions: subs });
     } catch (e) {
       console.warn('GitHub 백업 실패:', e);
     }

@@ -127,6 +127,15 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
               </option>
             ))}
           </select>
+          {selectedProblem && (() => {
+            const p = problems.find(pr => pr.id === selectedProblem);
+            return p ? (
+              <a href={p.url} target="_blank" rel="noopener noreferrer"
+                className="inline-block mt-2 text-xs text-[#58a6ff] hover:underline">
+                프로그래머스에서 문제 보기 &rarr;
+              </a>
+            ) : null;
+          })()}
         </div>
 
         <div className="mb-4">

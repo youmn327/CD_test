@@ -18,6 +18,8 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
   const [code, setCode] = useState('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [expandedTs, setExpandedTs] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('');
 
   const todayISO = new Date().toISOString().slice(0, 10);
   const days = ['일', '월', '화', '수', '목', '금', '토'];
@@ -52,6 +54,9 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
     if (!selectedProblem) return toast('문제를 선택하세요.', 'error');
     if (!code.trim()) return toast('코드를 입력하세요.', 'error');
 
+    setLoading(true);
+    setLoadingMsg('제출 및 GitHub 백업 커밋 중...');
+
     const problem = problems.find(p => p.id === selectedProblem)!;
     const res = await fetch('/api/submissions', {
       method: 'POST',
@@ -66,20 +71,24 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
       }),
     });
 
-    if (!res.ok) return toast('제출 실패', 'error');
+    if (!res.ok) { setLoading(false); return toast('제출 실패', 'error'); }
     const entry = await res.json();
     setSubmissions(prev => [...prev, entry]);
     setCode('');
     setSelectedProblem('');
     setImageBase64(null);
+    setLoading(false);
     toast(`${problem.name} 제출 완료! 백업 커밋됨`);
   }
 
   // 삭제
   async function handleDelete(timestamp: string) {
+    setLoading(true);
+    setLoadingMsg('삭제 및 백업 커밋 중...');
     const res = await fetch(`/api/submissions?timestamp=${timestamp}&member=${member.id}`, { method: 'DELETE' });
-    if (!res.ok) return toast('삭제 실패', 'error');
+    if (!res.ok) { setLoading(false); return toast('삭제 실패', 'error'); }
     setSubmissions(prev => prev.filter(s => s.timestamp !== timestamp));
+    setLoading(false);
     toast('삭제 완료! 백업 업데이트됨');
   }
 
@@ -99,6 +108,15 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
 
   return (
     <>
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-[2000]">
+          <div className="w-12 h-12 border-4 border-[#30363d] border-t-[#58a6ff] rounded-full animate-spin mb-4" />
+          <div className="text-white text-base font-semibold">{loadingMsg}</div>
+          <div className="text-[#8b949e] text-sm mt-2">GitHub에 백업 커밋 중입니다. 잠시만 기다려주세요.</div>
+        </div>
+      )}
+
       <Link href="/" className="inline-block mb-4 text-sm text-[#8b949e] hover:text-[#58a6ff]">&larr; 대시보드로 돌아가기</Link>
 
       <div className="text-center mb-8 pb-6 border-b border-[#30363d]">

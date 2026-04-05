@@ -23,6 +23,8 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const [newId, setNewId] = useState('');
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState('#7ee787');
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('');
 
   const defaultIds = ['jjw', 'nym'];
 
@@ -33,30 +35,38 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
     if (!id || !/^[a-zA-Z0-9_]+$/.test(id)) return toast('아이디는 영문, 숫자, _만 가능합니다.', 'error');
     if (members.some(m => m.id === id)) return toast('이미 존재하는 아이디입니다.', 'error');
 
+    setLoading(true);
+    setLoadingMsg('멤버 추가 및 GitHub 백업 커밋 중...');
+    setShowModal(false);
+
     const res = await fetch('/api/members', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, name, color: newColor }),
     });
-    if (!res.ok) return toast('멤버 추가 실패', 'error');
+    if (!res.ok) { setLoading(false); return toast('멤버 추가 실패', 'error'); }
 
     const updated = await res.json();
     setMembers(updated);
-    setShowModal(false);
     setNewId('');
     setNewName('');
     setNewColor('#7ee787');
+    setLoading(false);
     toast(`${name} 멤버 추가 + 백업 커밋 완료!`);
   }
 
   // === 멤버 삭제 ===
   async function deleteMember(id: string) {
     if (!confirm(`"${id}" 멤버를 삭제하시겠습니까?\n제출 데이터와 백업도 함께 삭제됩니다.`)) return;
+    setLoading(true);
+    setLoadingMsg('멤버 삭제 및 GitHub 백업 커밋 중...');
+
     const res = await fetch(`/api/members?id=${id}`, { method: 'DELETE' });
-    if (!res.ok) return toast('삭�� 실패', 'error');
+    if (!res.ok) { setLoading(false); return toast('삭제 실패', 'error'); }
     const updated = await res.json();
     setMembers(updated);
     setSubmissions(submissions.filter(s => s.member !== id));
+    setLoading(false);
     toast(`${id} 멤버 + 백업 삭제 완료!`);
   }
 
@@ -101,6 +111,15 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
 
   return (
     <>
+      {/* 로딩 오버레이 */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/70 flex flex-col items-center justify-center z-[2000]">
+          <div className="w-12 h-12 border-4 border-[#30363d] border-t-[#58a6ff] rounded-full animate-spin mb-4" />
+          <div className="text-white text-base font-semibold">{loadingMsg}</div>
+          <div className="text-[#8b949e] text-sm mt-2">GitHub에 백업 커밋 중입니다. 잠시만 기다려주세요.</div>
+        </div>
+      )}
+
       {/* 멤버 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {members.map(member => {

@@ -93,7 +93,7 @@ export async function backupMemberData(memberId: string, data: { member: any; su
       if (match) {
         const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
         const base64 = match[2];
-        const imgPath = `backups/${memberId}/${sub.timestamp}.${ext}`;
+        const imgPath = `backups/${memberId}/${sub.problemId}_${sub.date}.${ext}`;
         try {
           await commitBase64File(imgPath, base64, `backup: ${memberId} 이미지 저장`);
         } catch (e) {

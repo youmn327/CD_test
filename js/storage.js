@@ -1,6 +1,28 @@
 const Storage = {
   KEY: 'cd_submissions',
+  MEMBERS_KEY: 'cd_custom_members',
 
+  // === 멤버 관리 ===
+  getCustomMembers() {
+    return JSON.parse(localStorage.getItem(this.MEMBERS_KEY) || '[]');
+  },
+
+  addMember(member) {
+    const members = this.getCustomMembers();
+    members.push(member);
+    localStorage.setItem(this.MEMBERS_KEY, JSON.stringify(members));
+  },
+
+  removeMember(id) {
+    const members = this.getCustomMembers().filter(m => m.id !== id);
+    localStorage.setItem(this.MEMBERS_KEY, JSON.stringify(members));
+  },
+
+  getAllMembers() {
+    return [...CONFIG.MEMBERS, ...this.getCustomMembers()];
+  },
+
+  // === 제출 관리 ===
   getAll() {
     return JSON.parse(localStorage.getItem(this.KEY) || '[]');
   },
@@ -37,7 +59,7 @@ const Storage = {
     const all = this.getAll();
     const summary = {};
 
-    CONFIG.MEMBERS.forEach(m => { summary[m.id] = {}; });
+    this.getAllMembers().forEach(m => { summary[m.id] = {}; });
 
     all.forEach(s => {
       const month = s.date.slice(0, 7); // "YYYY-MM"

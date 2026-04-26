@@ -1,0 +1,18 @@
+{
+  "member": {
+    "id": "jjw",
+    "name": "JJW",
+    "color": "#58a6ff"
+  },
+  "submissions": [
+    {
+      "member": "jjw",
+      "problemId": "q01_babbling1",
+      "problemName": "옹알이 (1)",
+      "code": "def solution(babbling):\n    answer = 0\n    diction = [\"aya\", \"ye\", \"woo\", \"ma\"]\n    \n    for keyword in babbling:\n        for char in diction:\n            keyword = keyword.replace(char,\" \")\n           \n        if keyword.strip() == \"\":\n            answer += 1\n    return answer",
+      "date": "2026-04-26",
+      "image": "backups/jjw/q01_babbling1_2026-04-26.png",
+      "timestamp": "17771904385215691"
+    }
+  ]
+}

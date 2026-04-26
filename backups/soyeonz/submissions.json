@@ -4,5 +4,15 @@
     "name": "소연",
     "color": "#ba82e8"
   },
-  "submissions": []
+  "submissions": [
+    {
+      "member": "soyeonz",
+      "problemId": "q60_369_game",
+      "problemName": "369게임",
+      "code": "def solution(order):\n    order = [1 for i in str(order) if int(i) in (3, 6, 9)]\n    return sum(order)",
+      "date": "2026-04-26",
+      "image": null,
+      "timestamp": "17771868638913494"
+    }
+  ]
 }

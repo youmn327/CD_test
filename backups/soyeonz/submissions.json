@@ -13,6 +13,15 @@
       "date": "2026-04-26",
       "image": null,
       "timestamp": "17771868638913494"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "q59_find_number",
+      "problemName": "숫자 찾기",
+      "code": "def solution(num, k):\n    num = str(num)\n    for i in range(len(num)):\n        if k == int(num[i]):\n            return i + 1\n    return -1",
+      "date": "2026-04-26",
+      "image": null,
+      "timestamp": "17771878350853893"
     }
   ]
 }

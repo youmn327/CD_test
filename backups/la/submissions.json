@@ -4,5 +4,15 @@
     "name": "yuseong",
     "color": "#7ee787"
   },
-  "submissions": []
+  "submissions": [
+    {
+      "member": "la",
+      "problemId": "q01_babbling1",
+      "problemName": "옹알이 (1)",
+      "code": "class Solution {\n    fun solution(babbling: Array<String>): Int {\n        var answer: Int = 0\n        val a = arrayOf(\"aya\", \"ye\", \"woo\", \"ma\")\n        \n        for(i in babbling){\n            var word = i\n            for (j in a) {\n                word = word.replace(j, \" \")\n            }\n            if (word.replace(\" \", \"\").isEmpty()) {\n                answer++\n            }\n        }\n        return answer\n    }\n}",
+      "date": "2026-04-27",
+      "image": "backups/la/q01_babbling1_2026-04-27.png",
+      "timestamp": "17772922931088230"
+    }
+  ]
 }

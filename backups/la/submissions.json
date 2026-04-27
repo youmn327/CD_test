@@ -13,15 +13,6 @@
       "date": "2026-04-27",
       "image": "backups/la/q01_babbling1_2026-04-27.png",
       "timestamp": "17772922931088230"
-    },
-    {
-      "member": "la",
-      "problemId": "q02_parallel",
-      "problemName": "평행",
-      "code": "class Solution {\n    fun solution(dots: Array<IntArray>): Int {\n\n        val x1 = dots[0][0]\n        val y1 = dots[0][1]\n        val x2 = dots[1][0]\n        val y2 = dots[1][1]\n        val x3 = dots[2][0]\n        val y3 = dots[2][1]\n        val x4 = dots[3][0]\n        val y4 = dots[3][1]\n\n        var a = (y1-y2)*(x3-x4)\n        if (a<0) a = a * ( -1 )\n        \n        var b = (x1-x2)*(y3-y4)\n        if (b<0) b = b * ( -1 )\n        \n        if(a==b) return 1\n        \n        var c = (y1-y3)*(x2-x4)\n        if (c<0) c = c * ( -1 )\n        \n        var d = (x1-x3)*(y2-y4)\n        if (d<0) d = d * ( -1 )\n        \n        if(c==d) return 1\n        \n        var e = (y1-y4)*(x2-x3)\n        if (e<0) e = e * ( -1 )\n        \n        var f = (x1-x4)*(y2-y3)\n        if (f<0) f = f * ( -1 )\n        \n        if(e==f) return 1\n        \n        return 0\n    }\n}",
-      "date": "2026-04-27",
-      "image": "backups/la/q02_parallel_2026-04-27.png",
-      "timestamp": "17772934629570447"
     }
   ]
 }

@@ -13,6 +13,15 @@
       "date": "2026-04-26",
       "image": "backups/jjw/q01_babbling1_2026-04-26.png",
       "timestamp": "17771904385215691"
+    },
+    {
+      "member": "jjw",
+      "problemId": "q02_parallel",
+      "problemName": "평행",
+      "code": "def solution(dots):\n    def is_parallel(p1, p2, p3, p4):\n        # 기울기 비교: (y2-y1)*(x4-x3) == (y4-y3)*(x2-x1)\n        return (p2[1]-p1[1]) * (p4[0]-p3[0]) == (p4[1]-p3[1]) * (p2[0]-p1[0])\n\n    A, B, C, D = dots\n\n    if is_parallel(A, B, C, D): return 1\n    if is_parallel(A, C, B, D): return 1\n    if is_parallel(A, D, B, C): return 1\n\n    return 0",
+      "date": "2026-04-28",
+      "image": "backups/jjw/q02_parallel_2026-04-28.png",
+      "timestamp": "17773521276370141"
     }
   ]
 }

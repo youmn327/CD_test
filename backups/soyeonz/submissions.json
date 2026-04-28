@@ -22,6 +22,15 @@
       "date": "2026-04-26",
       "image": null,
       "timestamp": "17771878350853893"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "q02_parallel",
+      "problemName": "평행",
+      "code": "def solution(dot):\n    onetwothree = range(1, 4)\n    for i in onetwothree:\n        d1 = (dot[i][0] - dot[0][0]) / (dot[i][1] - dot[0][1])\n        a, b = [j for j in onetwothree if j != i]\n        d2 = (dot[a][0] - dot[b][0]) / (dot[a][1] - dot[b][1])\n        if d1 == d2:\n            return 1\n    return 0",
+      "date": "2026-04-28",
+      "image": null,
+      "timestamp": "17773773559530756"
     }
   ]
 }

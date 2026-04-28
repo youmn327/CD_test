@@ -31,6 +31,15 @@
       "date": "2026-04-28",
       "image": null,
       "timestamp": "17773773559530756"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "q03_overlapping_segments",
+      "problemName": "겹치는 선분의 길이",
+      "code": "def solution(lines):\n    x = [0] * 200\n    for a, b in lines:\n        for j in range(a, b):\n            x[j - 100] += 1\n    return sum(1 for i in x if i > 1)",
+      "date": "2026-04-28",
+      "image": null,
+      "timestamp": "17773782913370976"
     }
   ]
 }

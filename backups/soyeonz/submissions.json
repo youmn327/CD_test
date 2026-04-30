@@ -40,6 +40,15 @@
       "date": "2026-04-28",
       "image": null,
       "timestamp": "17773782913370976"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "q04_fraction_addition",
+      "problemName": "분수의 덧셈",
+      "code": "import math\n\ndef solution(numer1, denom1, numer2, denom2):\n    numer = numer1 * denom2 + numer2 * denom1\n    denom = denom1 * denom2\n    \n    gcd = math.gcd(numer, denom)\n    return [numer // gcd, denom // gcd]",
+      "date": "2026-04-30",
+      "image": null,
+      "timestamp": "17775504200800401"
     }
   ]
 }

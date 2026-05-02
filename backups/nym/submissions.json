@@ -40,6 +40,15 @@
       "date": "2026-05-03",
       "image": "backups/nym/120956_2026-05-03.png",
       "timestamp": "17777397479597547"
+    },
+    {
+      "member": "nym",
+      "problemId": "181952",
+      "problemName": "문자열 출력하기",
+      "code": "str = input()\nprint(str)",
+      "date": "2026-05-03",
+      "image": "backups/nym/181952_2026-05-03.png",
+      "timestamp": "17777431274902333"
     }
   ]
 }

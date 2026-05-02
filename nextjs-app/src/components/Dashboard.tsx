@@ -341,13 +341,14 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                             <span className="text-[10px] text-[#8b949e] font-semibold">{totalCount}</span>
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-0.5 items-start">
+                        <div className="flex flex-col gap-0.5 items-stretch">
                           {members.map(member => {
                             const cnt = dayData[member.id] || 0;
                             if (cnt === 0) return null;
                             return (
-                              <span key={member.id} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member.color }} title={`${member.name}: ${cnt}문제`}>
-                                {member.name[0]}{cnt > 1 ? `×${cnt}` : ''}
+                              <span key={member.id} className="inline-flex items-center justify-between gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member.color }} title={`${member.name}: ${cnt}문제`}>
+                                <span className="truncate">{member.name}</span>
+                                <span className="shrink-0">{cnt}</span>
                               </span>
                             );
                           })}

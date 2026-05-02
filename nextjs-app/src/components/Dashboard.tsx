@@ -135,13 +135,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
             <div key={member.id} className="relative">
               <button
                 onClick={() => deleteMember(member.id)}
-                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/15 text-red-400 text-sm flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                style={{ opacity: undefined }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+                className="absolute top-2 right-2 w-7 h-7 rounded-md bg-red-500/15 hover:bg-red-500/30 text-red-400 hover:text-red-300 text-sm flex items-center justify-center z-10 cursor-pointer transition-all border border-red-500/30 hover:border-red-500/60"
                 title="멤버 삭제 (비밀번호 필요)"
+                aria-label="멤버 삭제"
               >
-                &times;
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zm4.5 0V3h2.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75zM4.496 6.675a.75.75 0 10-1.492.15l.66 6.6A1.75 1.75 0 005.405 15h5.19c.9 0 1.652-.681 1.741-1.576l.66-6.6a.75.75 0 00-1.492-.149l-.66 6.6a.25.25 0 01-.249.225h-5.19a.25.25 0 01-.249-.225l-.66-6.6z"/></svg>
               </button>
               <Link href={`/${member.id}`}>
                 <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 hover:border-[#58a6ff] transition-colors cursor-pointer">

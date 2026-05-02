@@ -11,8 +11,9 @@ export default async function Home() {
   return (
     <main className="max-w-[960px] mx-auto px-4 py-6">
       <div className="text-center mb-8 pb-6 border-b border-[#30363d]">
-        <h1 className="text-3xl font-bold mb-2">Coding Test Dashboard</h1>
-        <p className="text-[#8b949e] text-sm mb-3">프로그래머스 Lv.0 - 풀이 현황</p>
+        <h1 className="text-3xl font-bold mb-2">🧑‍💻 코딩테스트 챌린지</h1>
+        <p className="text-[#8b949e] text-sm mb-1">프로그래머스 Lv.0 ~ Lv.5 · 총 {PROBLEMS.length}문제</p>
+        <p className="text-[#484f58] text-xs mb-3">함께 풀고, 매일 성장하는 멤버 풀이 현황 대시보드</p>
         <a
           href="https://github.com/youmn327/CD_test"
           target="_blank"

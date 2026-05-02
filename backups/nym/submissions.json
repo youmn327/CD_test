@@ -7,30 +7,39 @@
   "submissions": [
     {
       "member": "nym",
-      "problemId": "q30_ctrl_z",
+      "problemId": "120853",
       "problemName": "컨트롤 제트",
       "code": "def solution(s):\n    answer = 0\n    for tar in s.split(\" \"):\n        if tar == \"Z\" :\n            answer = answer - before     \n        else : \n            tar = int(tar)\n            answer = answer + tar\n            before = tar\n\n    return answer        \n    \n    \n    return answer",
       "date": "2026-04-05",
-      "image": "backups/nym/q30_ctrl_z_2026-04-05.png",
+      "image": "backups/nym/120853_2026-04-05.png",
       "timestamp": "17754154476189024"
     },
     {
       "member": "nym",
-      "problemId": "q29_slice_to_array",
+      "problemId": "120913",
       "problemName": "잘라서 배열로 저장하기",
       "code": "def solution(my_str, n):\n    answer = []\n    \n    while True:\n        if len(my_str) > n:\n            answer.append(my_str[0:n])\n            my_str = my_str[n:]\n        else:\n            answer.append(my_str)\n            break\n    return answer",
       "date": "2026-04-05",
-      "image": "backups/nym/q29_slice_to_array_2026-04-05.png",
+      "image": "backups/nym/120913_2026-04-05.png",
       "timestamp": "17754157017056126"
     },
     {
       "member": "nym",
-      "problemId": "q28_prime_factorization",
+      "problemId": "120852",
       "problemName": "소인수분해",
       "code": "def solution(n):\n    answer = []\n    \n    x = 2\n    while x <= n:\n        if n % x == 0:\n            if x not in answer:\n                answer.append(x)\n            n //= x\n        else:\n            x += 1\n    return answer",
       "date": "2026-04-06",
-      "image": "backups/nym/q28_prime_factorization_2026-04-06.png",
+      "image": "backups/nym/120852_2026-04-06.png",
       "timestamp": "17754162558534996"
+    },
+    {
+      "member": "nym",
+      "problemId": "120956",
+      "problemName": "옹알이 (1)",
+      "code": "def solution(babbling):\n    answer = 0\n    check_box = [\"aya\",\"ye\",\"woo\",\"ma\"]\n    for word in babbling:\n        for dc in check_box:\n            word = word.replace(dc,\" \")\n            \n        if len(word.replace(\" \",\"\")) == 0 :\n            answer += 1\n    return answer",
+      "date": "2026-05-03",
+      "image": "backups/nym/120956_2026-05-03.png",
+      "timestamp": "17777397479597547"
     }
   ]
 }

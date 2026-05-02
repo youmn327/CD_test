@@ -67,6 +67,15 @@
       "date": "2026-05-02",
       "image": null,
       "timestamp": "17777282203116884"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "q07_next_number",
+      "problemName": "다음에 올 숫자",
+      "code": "def solution(common):\n    sub = common[1] - common[0]\n    if common[2] - common[1] == sub:\n        return common[-1] + sub\n    return common[-1] * common[1] // common[0]",
+      "date": "2026-05-02",
+      "image": null,
+      "timestamp": "17777284408586241"
     }
   ]
 }

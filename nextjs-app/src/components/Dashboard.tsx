@@ -394,7 +394,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <span>💰 내기 벌금 현황</span>
             </h2>
-            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 동안 2문제 미만 풀이 시 2,000원 (시작: 2026-05-01)</p>
+            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 합산 2문제 이상 풀이 (1+1 또는 0+2 모두 OK). 미달 시 2,000원 · 시작: 2026-05-01</p>
           </div>
           <div className="text-right">
             <div className="text-xs text-[#8b949e]">총 벌금</div>

@@ -119,14 +119,16 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const FINE_PER_PERIOD = 2000;
   const PERIOD_DAYS = 2;
   const REQUIRED_PROBLEMS = 2;
+  const BET_START_DATE = '2026-05-01'; // 내기 시작일
 
   function calculateFines() {
-    if (submissions.length === 0) return { byMember: {} as Record<string, number>, total: 0, periods: [] as Array<{start: string, end: string, missed: Array<{member: string, count: number}>}> };
-
-    // 가장 이른 제출 날짜 찾기
-    const sortedDates = submissions.map(s => s.date).sort();
-    const startDate = new Date(sortedDates[0]);
+    const startDate = new Date(BET_START_DATE);
     const todayDate = new Date(today.toISOString().slice(0, 10));
+
+    // 시작일이 아직 안 됐으면 빈 결과
+    if (todayDate < startDate) {
+      return { byMember: {} as Record<string, number>, total: 0, periods: [] as Array<{start: string, end: string, missed: Array<{member: string, count: number}>}> };
+    }
 
     const byMember: Record<string, number> = {};
     members.forEach(m => { byMember[m.id] = 0; });
@@ -391,7 +393,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <span>💰 내기 벌금 현황</span>
             </h2>
-            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 동안 2문제 미만 풀이 시 2,000원</p>
+            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 동안 2문제 미만 풀이 시 2,000원 (시작: 2026-05-01)</p>
           </div>
           <div className="text-right">
             <div className="text-xs text-[#8b949e]">총 벌금</div>

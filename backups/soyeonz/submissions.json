@@ -58,6 +58,15 @@
       "date": "2026-04-30",
       "image": null,
       "timestamp": "17775513703827079"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "q06_consecutive_sum",
+      "problemName": "연속된 수의 합",
+      "code": "def solution(num, total):\n    x = (total - sum(range(num))) // num\n    return list(range(x, x + num))",
+      "date": "2026-05-02",
+      "image": null,
+      "timestamp": "17777282203116884"
     }
   ]
 }

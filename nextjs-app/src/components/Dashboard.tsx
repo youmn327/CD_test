@@ -115,6 +115,59 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const monthKey = `${selectedDailyYear}-${String(m).padStart(2, '0')}`;
   const monthSubs = submissions.filter(s => s.date.startsWith(monthKey));
 
+  // === 벌금 계산: 2일에 2문제 미만 → 2,000원 ===
+  const FINE_PER_PERIOD = 2000;
+  const PERIOD_DAYS = 2;
+  const REQUIRED_PROBLEMS = 2;
+
+  function calculateFines() {
+    if (submissions.length === 0) return { byMember: {} as Record<string, number>, total: 0, periods: [] as Array<{start: string, end: string, missed: Array<{member: string, count: number}>}> };
+
+    // 가장 이른 제출 날짜 찾기
+    const sortedDates = submissions.map(s => s.date).sort();
+    const startDate = new Date(sortedDates[0]);
+    const todayDate = new Date(today.toISOString().slice(0, 10));
+
+    const byMember: Record<string, number> = {};
+    members.forEach(m => { byMember[m.id] = 0; });
+    const periods: Array<{start: string, end: string, missed: Array<{member: string, count: number}>}> = [];
+
+    const cur = new Date(startDate);
+    while (cur <= todayDate) {
+      const periodStart = new Date(cur);
+      const periodEnd = new Date(cur);
+      periodEnd.setDate(periodEnd.getDate() + PERIOD_DAYS - 1);
+
+      // 현재 진행 중인 기간은 제외 (아직 끝나지 않음)
+      if (periodEnd > todayDate) break;
+
+      const startStr = periodStart.toISOString().slice(0, 10);
+      const endStr = periodEnd.toISOString().slice(0, 10);
+      const missed: Array<{member: string, count: number}> = [];
+
+      members.forEach(m => {
+        const count = submissions.filter(s =>
+          s.member === m.id && s.date >= startStr && s.date <= endStr
+        ).length;
+        if (count < REQUIRED_PROBLEMS) {
+          byMember[m.id] = (byMember[m.id] || 0) + FINE_PER_PERIOD;
+          missed.push({ member: m.id, count });
+        }
+      });
+
+      if (missed.length > 0) {
+        periods.push({ start: startStr, end: endStr, missed });
+      }
+
+      cur.setDate(cur.getDate() + PERIOD_DAYS);
+    }
+
+    const total = Object.values(byMember).reduce((a, b) => a + b, 0);
+    return { byMember, total, periods };
+  }
+
+  const fines = calculateFines();
+
   return (
     <>
       {/* 로딩 오버레이 */}
@@ -272,17 +325,27 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                     const isToday = selectedDailyYear === today.getFullYear() && selectedMonth === today.getMonth() && day === today.getDate();
                     const isWeekend = dow === 0 || dow === 6;
                     const dayData = dailyData[day] || {};
-                    const hasData = Object.values(dayData).some(v => v > 0);
+                    const totalCount = Object.values(dayData).reduce((a, b) => a + b, 0);
+                    // 활동량에 따른 배경 강도
+                    const intensity = totalCount === 0 ? 0 : totalCount < 2 ? 1 : totalCount < 5 ? 2 : totalCount < 10 ? 3 : 4;
+                    const bgColors = ['', 'bg-green-500/10', 'bg-green-500/20', 'bg-green-500/30', 'bg-green-500/40'];
+                    const dateStr = `${selectedDailyYear}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const isFuture = new Date(dateStr) > today;
                     return (
-                      <div key={dow} className={`min-h-[80px] bg-[#0d1117] border rounded-lg p-2 flex flex-col transition-colors ${isToday ? 'border-[#58a6ff] bg-[#58a6ff]/5' : 'border-[#21262d]'} ${hasData ? 'bg-green-500/5' : ''}`}>
-                        <div className={`text-xs font-semibold mb-1.5 ${isWeekend ? 'text-red-400' : 'text-[#8b949e]'}`}>{day}</div>
-                        <div className="flex flex-col gap-0.5 items-center">
+                      <div key={dow} className={`min-h-[100px] border rounded-lg p-2 flex flex-col transition-all ${isToday ? 'border-[#58a6ff] ring-1 ring-[#58a6ff]/40' : 'border-[#21262d] hover:border-[#30363d]'} ${isFuture ? 'opacity-30' : ''} ${bgColors[intensity]}`} title={`${dateStr} - ${totalCount}문제`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-xs font-bold ${isToday ? 'text-[#58a6ff]' : isWeekend ? 'text-red-400' : 'text-[#e6edf3]'}`}>{day}</span>
+                          {totalCount > 0 && (
+                            <span className="text-[10px] text-[#8b949e] font-semibold">{totalCount}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-0.5 items-start">
                           {members.map(member => {
                             const cnt = dayData[member.id] || 0;
                             if (cnt === 0) return null;
                             return (
-                              <span key={member.id} className="inline-block px-1.5 py-0.5 rounded text-[11px] font-semibold text-white" style={{ background: member.color }}>
-                                {member.name[0]} {cnt}
+                              <span key={member.id} className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member.color }} title={`${member.name}: ${cnt}문제`}>
+                                {member.name[0]}{cnt > 1 ? `×${cnt}` : ''}
                               </span>
                             );
                           })}
@@ -318,6 +381,72 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
               <div className="text-xs text-[#8b949e] text-right">이번 달 전체: {monthSubs.length}문제</div>
             </div>
           </>
+        )}
+      </div>
+
+      {/* 벌금 현황 */}
+      <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 mb-6">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#30363d] flex-wrap gap-2">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <span>💰 내기 벌금 현황</span>
+            </h2>
+            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 동안 2문제 미만 풀이 시 2,000원</p>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-[#8b949e]">총 벌금</div>
+            <div className="text-2xl font-bold text-red-400">{fines.total.toLocaleString()}원</div>
+          </div>
+        </div>
+
+        {/* 멤버별 벌금 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          {members.map(member => {
+            const fine = fines.byMember[member.id] || 0;
+            const periods = Math.floor(fine / FINE_PER_PERIOD);
+            return (
+              <div key={member.id} className={`flex items-center gap-3 border rounded-lg p-3 ${fine > 0 ? 'bg-red-500/5 border-red-500/30' : 'bg-[#0d1117] border-[#21262d]'}`}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0" style={{ background: member.color }}>
+                  {member.name[0]}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold" style={{ color: member.color }}>{member.name}</div>
+                  <div className={`text-lg font-bold ${fine > 0 ? 'text-red-400' : 'text-[#7ee787]'}`}>
+                    {fine === 0 ? '벌금 없음 ✓' : `${fine.toLocaleString()}원`}
+                  </div>
+                  {periods > 0 && (
+                    <div className="text-[11px] text-[#8b949e]">{periods}회 미달성</div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 미달성 기간 상세 (접을 수 있게) */}
+        {fines.periods.length > 0 && (
+          <details className="text-sm">
+            <summary className="cursor-pointer text-[#8b949e] hover:text-white py-2">
+              미달성 기간 상세 보기 ({fines.periods.length}건)
+            </summary>
+            <div className="mt-2 max-h-60 overflow-y-auto space-y-1 pr-2">
+              {fines.periods.map((p, i) => (
+                <div key={i} className="flex items-center justify-between bg-[#0d1117] border border-[#21262d] rounded px-3 py-2 text-xs">
+                  <span className="text-[#8b949e]">{p.start} ~ {p.end}</span>
+                  <div className="flex gap-1.5">
+                    {p.missed.map(m => {
+                      const member = members.find(mem => mem.id === m.member);
+                      return (
+                        <span key={m.member} className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member?.color || '#8b949e' }} title={`${m.count}문제만 풀이`}>
+                          {member?.name[0] || m.member[0]} {m.count}/2
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
       </div>
 

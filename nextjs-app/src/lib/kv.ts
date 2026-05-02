@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis';
 import type { Member, Submission } from './types';
+import idMigration from './id_migration.json';
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL!,
@@ -8,6 +9,29 @@ const redis = new Redis({
 
 const MEMBERS_KEY = 'members';
 const SUBMISSIONS_KEY = 'submissions';
+const MIGRATION_KEY = 'id_migration_v1_done';
+
+// 기존 problemId를 새 lesson_id 기반 ID로 마이그레이션
+const ID_MAP: Record<string, string> = idMigration as Record<string, string>;
+
+async function runMigrationIfNeeded(): Promise<void> {
+  const done = await redis.get<boolean>(MIGRATION_KEY);
+  if (done) return;
+  const all = (await redis.get<Submission[]>(SUBMISSIONS_KEY)) || [];
+  let changed = false;
+  const migrated = all.map(s => {
+    const newId = ID_MAP[s.problemId];
+    if (newId && newId !== s.problemId) {
+      changed = true;
+      return { ...s, problemId: newId };
+    }
+    return s;
+  });
+  if (changed) {
+    await redis.set(SUBMISSIONS_KEY, migrated);
+  }
+  await redis.set(MIGRATION_KEY, true);
+}
 
 // === Members ===
 export async function getMembers(): Promise<Member[]> {
@@ -35,6 +59,7 @@ export async function removeMember(id: string): Promise<Member[]> {
 
 // === Submissions ===
 export async function getSubmissions(): Promise<Submission[]> {
+  await runMigrationIfNeeded();
   return (await redis.get<Submission[]>(SUBMISSIONS_KEY)) || [];
 }
 

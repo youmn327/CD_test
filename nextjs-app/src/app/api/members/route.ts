@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { getMembers, addMember, removeMember } from '@/lib/kv';
 import { backupMemberData, deleteMemberBackup } from '@/lib/github';
+
+// SHA-256 해시 (원본 비밀번호는 저장소에 노출되지 않음)
+const ADMIN_PASSWORD_HASH = '20c2624df470adfa41004928c0713817635b1df0ff1e986299f498a8e59a509d';
+
+function verifyPassword(password: string): boolean {
+  if (!password) return false;
+  const hash = createHash('sha256').update(password).digest('hex');
+  return hash === ADMIN_PASSWORD_HASH;
+}
 
 // GET /api/members - 전체 멤버 조회
 export async function GET() {
@@ -34,10 +44,16 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(members, { status: 201 });
 }
 
-// DELETE /api/members?id=xxx - 멤버 삭제
+// DELETE /api/members?id=xxx - 멤버 삭제 (관리자 비밀번호 필요)
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id 필요' }, { status: 400 });
+
+  // 비밀번호 검증
+  const password = req.headers.get('x-admin-password') || '';
+  if (!verifyPassword(password)) {
+    return NextResponse.json({ error: '비밀번호가 일치하지 않습니다' }, { status: 401 });
+  }
 
   const members = await removeMember(id);
 

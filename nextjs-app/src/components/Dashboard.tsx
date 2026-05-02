@@ -26,8 +26,6 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
 
-  const defaultIds = ['jjw', 'nym'];
-
   // === 멤버 추가 ===
   async function createMember() {
     const id = newId.trim().toLowerCase();
@@ -55,13 +53,21 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
     toast(`${name} 멤버 추가 + 백업 커밋 완료!`);
   }
 
-  // === 멤버 삭제 ===
+  // === 멤버 삭제 (비밀번호 필요) ===
   async function deleteMember(id: string) {
     if (!confirm(`"${id}" 멤버를 삭제하시겠습니까?\n제출 데이터와 백업도 함께 삭제됩니다.`)) return;
+    const password = prompt('관리자 비밀번호를 입력하세요:');
+    if (password === null) return; // 사용자가 취소
+    if (!password) return toast('비밀번호를 입력해야 합니다.', 'error');
+
     setLoading(true);
     setLoadingMsg('멤버 삭제 및 GitHub 백업 커밋 중...');
 
-    const res = await fetch(`/api/members?id=${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/members?id=${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': password },
+    });
+    if (res.status === 401) { setLoading(false); return toast('비밀번호가 일치하지 않습니다.', 'error'); }
     if (!res.ok) { setLoading(false); return toast('삭제 실패', 'error'); }
     const updated = await res.json();
     setMembers(updated);
@@ -125,20 +131,18 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         {members.map(member => {
           const solved = submissions.filter(s => s.member === member.id).length;
           const pct = Math.round((solved / problems.length) * 100);
-          const isCustom = !defaultIds.includes(member.id);
           return (
             <div key={member.id} className="relative">
-              {isCustom && (
-                <button
-                  onClick={() => deleteMember(member.id)}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/15 text-red-400 text-sm flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                  style={{ opacity: undefined }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
-                >
-                  &times;
-                </button>
-              )}
+              <button
+                onClick={() => deleteMember(member.id)}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500/15 text-red-400 text-sm flex items-center justify-center z-10 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                style={{ opacity: undefined }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '0')}
+                title="멤버 삭제 (비밀번호 필요)"
+              >
+                &times;
+              </button>
               <Link href={`/${member.id}`}>
                 <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-5 hover:border-[#58a6ff] transition-colors cursor-pointer">
                   <div className="flex items-center gap-3 mb-4">

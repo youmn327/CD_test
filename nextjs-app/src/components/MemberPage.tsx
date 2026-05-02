@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { Member, Submission } from '@/lib/types';
-import type { Problem } from '@/lib/problems';
+import { groupByLevel, paginateProblems, type Problem } from '@/lib/problems';
 import Toast, { toast } from './Toast';
 
 interface Props {
@@ -20,6 +20,15 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
   const [expandedTs, setExpandedTs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
+  const [activeLevel, setActiveLevel] = useState(0);
+  const [activePage, setActivePage] = useState(0);
+
+  // 레벨별 그룹 + 페이지 분할
+  const grouped = groupByLevel(problems);
+  const availableLevels = Object.keys(grouped).map(Number).sort();
+  const currentLevelProblems = grouped[activeLevel] || [];
+  const pages = paginateProblems(currentLevelProblems, 30);
+  const currentPageProblems = pages[activePage] || [];
 
   // 한국 시간 기준 날짜
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
@@ -126,7 +135,7 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
           {member.name[0]}
         </div>
         <h1 className="text-2xl font-bold">{member.name}</h1>
-        <p className="text-[#8b949e] text-sm">프로그래머스 Lv.0 풀이 제출</p>
+        <p className="text-[#8b949e] text-sm">프로그래머스 풀이 제출</p>
       </div>
 
       {/* 제출 폼 */}
@@ -135,13 +144,56 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
 
         <div className="mb-4">
           <label className="block text-sm text-[#8b949e] mb-1.5">문제 선택</label>
+
+          {/* 레벨 탭 */}
+          <div className="flex gap-1 mb-2 bg-[#21262d] rounded-lg p-1 overflow-x-auto">
+            {[0, 1, 2, 3, 4, 5].map(lv => {
+              const has = availableLevels.includes(lv);
+              return (
+                <button
+                  key={lv}
+                  onClick={() => { setActiveLevel(lv); setActivePage(0); setSelectedProblem(''); }}
+                  disabled={!has}
+                  className={`px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                    activeLevel === lv
+                      ? 'bg-[#30363d] text-white'
+                      : has
+                      ? 'text-[#8b949e] hover:text-white'
+                      : 'text-[#484f58] cursor-not-allowed'
+                  }`}
+                >
+                  Lv.{lv}{has ? ` (${grouped[lv].length})` : ''}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* 페이지 탭 (30문제 초과 시) */}
+          {pages.length > 1 && (
+            <div className="flex gap-1 mb-2 flex-wrap">
+              {pages.map((page, i) => (
+                <button
+                  key={i}
+                  onClick={() => { setActivePage(i); setSelectedProblem(''); }}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+                    activePage === i
+                      ? 'bg-[#58a6ff] text-white'
+                      : 'bg-[#21262d] text-[#8b949e] hover:text-white'
+                  }`}
+                >
+                  {i * 30 + 1}-{i * 30 + page.length}
+                </button>
+              ))}
+            </div>
+          )}
+
           <select
             value={selectedProblem}
             onChange={e => setSelectedProblem(e.target.value)}
             className="w-full px-3 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-lg text-sm text-white outline-none focus:border-[#58a6ff]"
           >
             <option value="">-- 문제를 선택하세요 --</option>
-            {problems.map(p => (
+            {currentPageProblems.map(p => (
               <option key={p.id} value={p.id} style={submittedIds.has(p.id) ? { color: '#7ee787' } : {}}>
                 {submittedIds.has(p.id) ? '✓ ' : ''}{p.id} - {p.name} ({p.rate}%)
               </option>

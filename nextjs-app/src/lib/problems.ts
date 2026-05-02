@@ -3,9 +3,10 @@ export interface Problem {
   name: string;
   rate: number;
   url: string;
+  level: number;
 }
 
-export const PROBLEMS: Problem[] = [
+const LV0_PROBLEMS_RAW: Omit<Problem, 'level'>[] = [
   { id: 'q01_babbling1', name: '옹알이 (1)', rate: 38, url: 'https://school.programmers.co.kr/learn/courses/30/lessons/120956' },
   { id: 'q02_parallel', name: '평행', rate: 55, url: 'https://school.programmers.co.kr/learn/courses/30/lessons/120875' },
   { id: 'q03_overlapping_segments', name: '겹치는 선분의 길이', rate: 62, url: 'https://school.programmers.co.kr/learn/courses/30/lessons/120876' },
@@ -67,3 +68,28 @@ export const PROBLEMS: Problem[] = [
   { id: 'q59_find_number', name: '숫자 찾기', rate: 89, url: 'https://school.programmers.co.kr/learn/courses/30/lessons/120904' },
   { id: 'q60_369_game', name: '369게임', rate: 89, url: 'https://school.programmers.co.kr/learn/courses/30/lessons/120891' },
 ];
+
+export const PROBLEMS: Problem[] = [
+  ...LV0_PROBLEMS_RAW.map(p => ({ ...p, level: 0 })),
+  // TODO: Lv.1~5 추가
+  // { id: 'l1_xxx', name: '...', rate: 0, url: '...', level: 1 },
+];
+
+// 레벨별로 그룹화된 문제 목록
+export function groupByLevel(problems: Problem[]): Record<number, Problem[]> {
+  const groups: Record<number, Problem[]> = {};
+  for (const p of problems) {
+    if (!groups[p.level]) groups[p.level] = [];
+    groups[p.level].push(p);
+  }
+  return groups;
+}
+
+// 30문제 단위로 페이지 분할
+export function paginateProblems(problems: Problem[], pageSize = 30): Problem[][] {
+  const pages: Problem[][] = [];
+  for (let i = 0; i < problems.length; i += pageSize) {
+    pages.push(problems.slice(i, i + pageSize));
+  }
+  return pages;
+}

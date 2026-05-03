@@ -10,6 +10,16 @@ const redis = new Redis({
 const MEMBERS_KEY = 'members';
 const SUBMISSIONS_KEY = 'submissions';
 const MIGRATION_KEY = 'id_migration_v1_done';
+const MAINTENANCE_KEY = 'maintenance_mode';
+
+// === Maintenance mode ===
+export async function getMaintenanceMode(): Promise<boolean> {
+  return (await redis.get<boolean>(MAINTENANCE_KEY)) || false;
+}
+
+export async function setMaintenanceMode(enabled: boolean): Promise<void> {
+  await redis.set(MAINTENANCE_KEY, enabled);
+}
 
 // 기존 problemId를 새 lesson_id 기반 ID로 마이그레이션
 const ID_MAP: Record<string, string> = idMigration as Record<string, string>;

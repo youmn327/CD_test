@@ -1,4 +1,4 @@
-import { getMembers, getSubmissions } from '@/lib/kv';
+import { getMembers, getSubmissions, getMaintenanceMode } from '@/lib/kv';
 import { PROBLEMS } from '@/lib/problems';
 import Dashboard from '@/components/Dashboard';
 
@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export default async function Home() {
   const members = await getMembers();
   const submissions = await getSubmissions();
+  const maintenance = await getMaintenanceMode();
 
   return (
     <main className="max-w-[960px] mx-auto px-4 py-6">
@@ -28,6 +29,7 @@ export default async function Home() {
         initialMembers={members}
         initialSubmissions={submissions}
         problems={PROBLEMS}
+        initialMaintenance={maintenance}
       />
     </main>
   );

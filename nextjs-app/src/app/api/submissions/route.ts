@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSubmissions, getSubmissionsByMember, addSubmission, removeSubmission } from '@/lib/kv';
+import { getSubmissions, getSubmissionsByMember, addSubmission, removeSubmission, getMaintenanceMode } from '@/lib/kv';
 import { backupMemberData } from '@/lib/github';
 import { getMembers } from '@/lib/kv';
 
@@ -14,6 +14,11 @@ export async function GET(req: NextRequest) {
 
 // POST /api/submissions - 제출 추가
 export async function POST(req: NextRequest) {
+  // 점검 모드 체크
+  if (await getMaintenanceMode()) {
+    return NextResponse.json({ error: '운영자가 업데이트 중입니다. 잠시 후 다시 시도해주세요.' }, { status: 503 });
+  }
+
   const body = await req.json();
   const { member, problemId, problemName, code, date, image } = body;
 

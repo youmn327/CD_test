@@ -10,9 +10,10 @@ interface Props {
   member: Member;
   initialSubmissions: Submission[];
   problems: Problem[];
+  initialMaintenance?: boolean;
 }
 
-export default function MemberPage({ member, initialSubmissions, problems }: Props) {
+export default function MemberPage({ member, initialSubmissions, problems, initialMaintenance = false }: Props) {
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [selectedProblem, setSelectedProblem] = useState('');
   const [code, setCode] = useState('');
@@ -20,6 +21,7 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
   const [expandedTs, setExpandedTs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
+  const [maintenance] = useState(initialMaintenance);
   const [activeLevel, setActiveLevel] = useState(0);
   const [activePage, setActivePage] = useState(0);
 
@@ -62,6 +64,7 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
 
   // 제출
   async function handleSubmit() {
+    if (maintenance) return toast('운영자가 업데이트 중입니다. 잠시 후 다시 시도해주세요.', 'error');
     if (!selectedProblem) return toast('문제를 선택하세요.', 'error');
     if (!code.trim()) return toast('코드를 입력하세요.', 'error');
 
@@ -82,6 +85,7 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
       }),
     });
 
+    if (res.status === 503) { setLoading(false); return toast('운영자가 업데이트 중입니다. 잠시 후 다시 시도해주세요.', 'error'); }
     if (!res.ok) { setLoading(false); return toast('제출 실패', 'error'); }
     const entry = await res.json();
     setSubmissions(prev => [...prev, entry]);
@@ -129,6 +133,14 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
       )}
 
       <Link href="/" className="inline-block mb-4 text-sm text-[#8b949e] hover:text-[#58a6ff]">&larr; 대시보드로 돌아가기</Link>
+
+      {/* 점검 중 배너 */}
+      {maintenance && (
+        <div className="bg-yellow-500/15 border border-yellow-500/40 rounded-lg p-4 mb-4 text-center">
+          <div className="text-yellow-400 font-bold text-base mb-1">⚙️ 운영자가 업데이트 중입니다</div>
+          <div className="text-[#8b949e] text-sm">점검이 완료되면 다시 제출 가능합니다. 잠시만 기다려주세요.</div>
+        </div>
+      )}
 
       <div className="text-center mb-8 pb-6 border-b border-[#30363d]">
         <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-2xl text-white mx-auto mb-3" style={{ background: member.color }}>
@@ -247,8 +259,16 @@ export default function MemberPage({ member, initialSubmissions, problems }: Pro
           <input type="text" readOnly value={todayDisplay} className="w-full px-3 py-2.5 bg-[#0d1117] border border-[#30363d] rounded-lg text-sm text-[#8b949e] outline-none" />
         </div>
 
-        <button onClick={handleSubmit} className="px-6 py-2.5 bg-[#238636] rounded-lg text-sm font-semibold text-white hover:bg-[#2ea043] cursor-pointer">
-          업로드
+        <button
+          onClick={handleSubmit}
+          disabled={maintenance}
+          className={`px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition-colors ${
+            maintenance
+              ? 'bg-gray-600 cursor-not-allowed opacity-60'
+              : 'bg-[#238636] hover:bg-[#2ea043] cursor-pointer'
+          }`}
+        >
+          {maintenance ? '점검 중 - 제출 불가' : '업로드'}
         </button>
       </div>
 

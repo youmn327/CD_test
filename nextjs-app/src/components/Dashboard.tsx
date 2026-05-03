@@ -10,9 +10,10 @@ interface Props {
   initialMembers: Member[];
   initialSubmissions: Submission[];
   problems: Problem[];
+  initialMaintenance?: boolean;
 }
 
-export default function Dashboard({ initialMembers, initialSubmissions, problems }: Props) {
+export default function Dashboard({ initialMembers, initialSubmissions, problems, initialMaintenance = false }: Props) {
   const [members, setMembers] = useState(initialMembers);
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [tab, setTab] = useState<'monthly' | 'daily'>('monthly');
@@ -26,6 +27,31 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
   const [showHelp, setShowHelp] = useState(false);
+  const [maintenance, setMaintenance] = useState(initialMaintenance);
+
+  // === 점검 모드 토글 ===
+  async function toggleMaintenance() {
+    const next = !maintenance;
+    const action = next ? '점검 모드를 활성화' : '점검 모드를 해제';
+    if (!confirm(`${action}하시겠습니까?\n${next ? '활성화 시 사용자가 문제를 제출할 수 없습니다.' : '해제 시 사용자가 다시 제출 가능합니다.'}`)) return;
+    const password = prompt('관리자 비밀번호를 입력하세요:');
+    if (password === null) return;
+    if (!password) return toast('비밀번호를 입력해야 합니다.', 'error');
+
+    setLoading(true);
+    setLoadingMsg(`${action} 중...`);
+    const res = await fetch('/api/maintenance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+      body: JSON.stringify({ active: next }),
+    });
+    if (res.status === 401) { setLoading(false); return toast('비밀번호가 일치하지 않습니다.', 'error'); }
+    if (!res.ok) { setLoading(false); return toast('변경 실패', 'error'); }
+    const data = await res.json();
+    setMaintenance(data.active);
+    setLoading(false);
+    toast(next ? '⚙️ 점검 모드 활성화됨' : '✅ 점검 모드 해제됨');
+  }
 
   // === 멤버 추가 ===
   async function createMember() {
@@ -225,8 +251,28 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         </div>
       )}
 
-      {/* 도움말 버튼 */}
-      <div className="flex justify-end mb-4">
+      {/* 점검 중 배너 */}
+      {maintenance && (
+        <div className="bg-yellow-500/15 border border-yellow-500/40 rounded-lg p-3 mb-4 flex items-center gap-2 text-sm">
+          <span className="text-yellow-400 font-bold">⚙️ 점검 모드 활성화됨</span>
+          <span className="text-[#8b949e]">— 운영자가 업데이트 중입니다. 문제 제출이 일시 중단됩니다.</span>
+        </div>
+      )}
+
+      {/* 상단 액션 버튼 */}
+      <div className="flex justify-end gap-2 mb-4">
+        <button
+          onClick={toggleMaintenance}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
+            maintenance
+              ? 'bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/50 text-yellow-300'
+              : 'bg-[#21262d] hover:bg-[#30363d] border-[#30363d] text-[#8b949e] hover:text-white'
+          }`}
+          title={maintenance ? '점검 해제 (관리자 비밀번호 필요)' : '점검 모드 활성화 (관리자 비밀번호 필요)'}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a1 1 0 00-1 1v1.07A6.002 6.002 0 002.07 7H1a1 1 0 100 2h1.07A6.002 6.002 0 007 13.93V15a1 1 0 102 0v-1.07A6.002 6.002 0 0013.93 9H15a1 1 0 100-2h-1.07A6.002 6.002 0 009 2.07V1a1 1 0 00-1-1zM4 8a4 4 0 118 0 4 4 0 01-8 0z"/></svg>
+          <span>{maintenance ? '점검 해제' : '점검 모드'}</span>
+        </button>
         <button
           onClick={() => setShowHelp(true)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] rounded-lg text-sm text-[#8b949e] hover:text-white transition-colors cursor-pointer"
@@ -307,6 +353,19 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                     <div>10+문제</div>
                   </div>
                 </div>
+              </section>
+
+              {/* 점검 모드 */}
+              <section>
+                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">⚙️ 점검 모드 (운영자 전용)</h4>
+                <p className="text-[#e6edf3] leading-relaxed mb-2">
+                  운영자가 데이터를 업데이트하는 동안 사용자의 동시 제출을 막아 데이터 충돌을 방지하는 기능입니다.
+                </p>
+                <ul className="space-y-1 text-[#e6edf3] list-disc list-inside text-xs">
+                  <li>대시보드 우측 상단 <b>점검 모드</b> 버튼 → 비밀번호 입력 → 활성화</li>
+                  <li>활성화 중에는 모든 멤버의 제출이 차단되고 노란 배너가 표시됨</li>
+                  <li>업데이트 완료 후 같은 버튼으로 해제 (비밀번호 필요)</li>
+                </ul>
               </section>
 
               {/* 백업 */}

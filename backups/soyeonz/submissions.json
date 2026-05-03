@@ -7,7 +7,7 @@
   "submissions": [
     {
       "member": "soyeonz",
-      "problemId": "q60_369_game",
+      "problemId": "120891",
       "problemName": "369게임",
       "code": "def solution(order):\n    order = [1 for i in str(order) if int(i) in (3, 6, 9)]\n    return sum(order)",
       "date": "2026-04-26",
@@ -16,7 +16,7 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q59_find_number",
+      "problemId": "120904",
       "problemName": "숫자 찾기",
       "code": "def solution(num, k):\n    num = str(num)\n    for i in range(len(num)):\n        if k == int(num[i]):\n            return i + 1\n    return -1",
       "date": "2026-04-26",
@@ -25,7 +25,7 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q02_parallel",
+      "problemId": "120875",
       "problemName": "평행",
       "code": "def solution(dot):\n    onetwothree = range(1, 4)\n    for i in onetwothree:\n        d1 = (dot[i][0] - dot[0][0]) / (dot[i][1] - dot[0][1])\n        a, b = [j for j in onetwothree if j != i]\n        d2 = (dot[a][0] - dot[b][0]) / (dot[a][1] - dot[b][1])\n        if d1 == d2:\n            return 1\n    return 0",
       "date": "2026-04-28",
@@ -34,7 +34,7 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q03_overlapping_segments",
+      "problemId": "120876",
       "problemName": "겹치는 선분의 길이",
       "code": "def solution(lines):\n    x = [0] * 200\n    for a, b in lines:\n        for j in range(a, b):\n            x[j - 100] += 1\n    return sum(1 for i in x if i > 1)",
       "date": "2026-04-28",
@@ -43,7 +43,7 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q04_fraction_addition",
+      "problemId": "120808",
       "problemName": "분수의 덧셈",
       "code": "import math\n\ndef solution(numer1, denom1, numer2, denom2):\n    numer = numer1 * denom2 + numer2 * denom1\n    denom = denom1 * denom2\n    \n    gcd = math.gcd(numer, denom)\n    return [numer // gcd, denom // gcd]",
       "date": "2026-04-30",
@@ -52,7 +52,7 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q05_safe_zone",
+      "problemId": "120866",
       "problemName": "안전지대",
       "code": "def solution(board):\n    n = len(board)\n    danger = [(i, j) for i in range(-1, 2) for j in range(-1, 2) if i or j]\n    for i in range(n):\n        for j in range(n):\n            if board[i][j] == 1:\n                for di, dj in danger:\n                    if 0 <= i + di < n and 0 <= j + dj < n and board[i + di][j + dj] == 0:\n                        board[i + di][j + dj] = 2\n    return sum(1 for i in range(n) for j in range(n) if board[i][j] == 0)",
       "date": "2026-04-30",
@@ -61,7 +61,7 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q06_consecutive_sum",
+      "problemId": "120923",
       "problemName": "연속된 수의 합",
       "code": "def solution(num, total):\n    x = (total - sum(range(num))) // num\n    return list(range(x, x + num))",
       "date": "2026-05-02",
@@ -70,12 +70,21 @@
     },
     {
       "member": "soyeonz",
-      "problemId": "q07_next_number",
+      "problemId": "120924",
       "problemName": "다음에 올 숫자",
       "code": "def solution(common):\n    sub = common[1] - common[0]\n    if common[2] - common[1] == sub:\n        return common[-1] + sub\n    return common[-1] * common[1] // common[0]",
       "date": "2026-05-02",
       "image": null,
       "timestamp": "17777284408586241"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "12979",
+      "problemName": "기지국 설치",
+      "code": "from math import ceil\ndef solution(n, stations, w):\n    answer = 0\n    ap = 1\n    for st in stations:\n        if st - w > ap:\n            aparts = st - w - ap\n            answer += ceil(aparts / (2 * w + 1))\n        ap = st + w + 1\n    if ap <= n:\n        aparts = n - ap + 1\n        answer += ceil(aparts / (2 * w + 1))\n    return answer",
+      "date": "2026-05-03",
+      "image": null,
+      "timestamp": "17778080305181376"
     }
   ]
 }

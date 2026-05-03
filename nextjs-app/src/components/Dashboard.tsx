@@ -25,6 +25,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const [newColor, setNewColor] = useState('#7ee787');
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
 
   // === 멤버 추가 ===
   async function createMember() {
@@ -221,6 +222,109 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
           <div className="w-12 h-12 border-4 border-[#30363d] border-t-[#58a6ff] rounded-full animate-spin mb-4" />
           <div className="text-white text-base font-semibold">{loadingMsg}</div>
           <div className="text-[#8b949e] text-sm mt-2">GitHub에 백업 커밋 중입니다. 잠시만 기다려주세요.</div>
+        </div>
+      )}
+
+      {/* 도움말 버튼 */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setShowHelp(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] rounded-lg text-sm text-[#8b949e] hover:text-white transition-colors cursor-pointer"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zM7.25 11.5a.75.75 0 111.5 0 .75.75 0 01-1.5 0zm.5-7.5C6.34 4 5.5 4.79 5.5 5.83a.75.75 0 001.5 0c0-.27.32-.58.75-.58.43 0 .75.31.75.58 0 .31-.16.53-.5.78l-.31.21c-.45.32-.94.78-.94 1.43v.5a.75.75 0 001.5 0V8.5c0-.06.04-.18.5-.5l.27-.18c.43-.3.98-.74.98-1.49C9.75 4.79 8.91 4 7.75 4z"/></svg>
+          <span>도움말</span>
+        </button>
+      </div>
+
+      {/* 도움말 모달 */}
+      {showHelp && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1500] p-4 overflow-y-auto" onClick={e => { if (e.target === e.currentTarget) setShowHelp(false); }}>
+          <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 w-full max-w-[600px] my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#30363d]">
+              <h3 className="text-xl font-bold flex items-center gap-2">📘 도움말</h3>
+              <button onClick={() => setShowHelp(false)} className="text-[#8b949e] hover:text-white text-2xl cursor-pointer leading-none">×</button>
+            </div>
+
+            <div className="space-y-5 text-sm">
+              {/* 서비스 소개 */}
+              <section>
+                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">🧑‍💻 서비스 소개</h4>
+                <p className="text-[#e6edf3] leading-relaxed">
+                  팀원들과 함께 프로그래머스 코딩테스트 문제를 풀고, 진행 상황을 공유하는 대시보드입니다.
+                  Lv.0 ~ Lv.5 총 689문제를 등록해두었으며, 풀이 코드와 스크린샷을 제출하면 GitHub에 자동으로 백업됩니다.
+                </p>
+              </section>
+
+              {/* 사용법 */}
+              <section>
+                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">📝 사용법</h4>
+                <ul className="space-y-1.5 text-[#e6edf3] list-disc list-inside leading-relaxed">
+                  <li><b>풀이 제출</b>: 멤버 카드 클릭 → 문제 선택 → 코드 입력 → 업로드</li>
+                  <li><b>이미지 첨부</b>: 클릭, 드래그, Ctrl+V로 스크린샷 추가 가능</li>
+                  <li><b>멤버 추가</b>: 대시보드의 <b>+</b> 카드 클릭 → 아이디/이름/색상 입력</li>
+                  <li><b>멤버 삭제</b>: 카드 우측 상단 휴지통 아이콘 클릭 (관리자 비밀번호 필요)</li>
+                  <li><b>제출 기록 삭제</b>: 멤버 페이지에서 각 항목의 삭제 버튼</li>
+                </ul>
+              </section>
+
+              {/* 벌금 규칙 */}
+              <section className="bg-red-500/5 border border-red-500/30 rounded-lg p-4">
+                <h4 className="text-base font-semibold text-red-400 mb-2">💰 벌금 규칙</h4>
+                <div className="space-y-2 text-[#e6edf3] leading-relaxed">
+                  <p><b>시작일</b>: 2026-05-01부터 적용</p>
+                  <p><b>규칙</b>: 매 2일마다 합산 2문제 이상 풀어야 합니다.</p>
+                  <p><b>미달 시</b>: 2,000원 벌금</p>
+                  <div className="bg-[#0d1117] rounded p-3 mt-2 text-xs">
+                    <div className="font-semibold mb-1.5 text-[#8b949e]">예시 (2일 단위 평가)</div>
+                    <div className="space-y-0.5 font-mono">
+                      <div className="text-[#7ee787]">✓ 1일 1문제 + 2일 1문제 = 2문제 → 통과</div>
+                      <div className="text-[#7ee787]">✓ 1일 0문제 + 2일 2문제 = 2문제 → 통과</div>
+                      <div className="text-[#7ee787]">✓ 1일 2문제 + 2일 0문제 = 2문제 → 통과</div>
+                      <div className="text-red-400">✗ 1일 0문제 + 2일 1문제 = 1문제 → <b>2,000원</b></div>
+                      <div className="text-red-400">✗ 1일 0문제 + 2일 0문제 = 0문제 → <b>2,000원</b></div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* 캘린더 색상 */}
+              <section>
+                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">🎨 캘린더 색상 의미</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                  <div className="bg-[#0d1117] border border-[#21262d] rounded p-2 text-center">
+                    <div className="text-[#8b949e]">0문제</div>
+                  </div>
+                  <div className="bg-green-500/10 border border-[#21262d] rounded p-2 text-center">
+                    <div>1문제</div>
+                  </div>
+                  <div className="bg-green-500/20 border border-[#21262d] rounded p-2 text-center">
+                    <div>2-4문제</div>
+                  </div>
+                  <div className="bg-green-500/30 border border-[#21262d] rounded p-2 text-center">
+                    <div>5-9문제</div>
+                  </div>
+                  <div className="bg-green-500/40 border border-[#21262d] rounded p-2 text-center">
+                    <div>10+문제</div>
+                  </div>
+                </div>
+              </section>
+
+              {/* 백업 */}
+              <section>
+                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">💾 자동 백업</h4>
+                <p className="text-[#e6edf3] leading-relaxed">
+                  모든 풀이는 GitHub의 <code className="bg-[#0d1117] px-1.5 py-0.5 rounded text-xs">backups/{`{멤버ID}`}/</code> 폴더에 자동 커밋됩니다.
+                  코드는 <code className="bg-[#0d1117] px-1.5 py-0.5 rounded text-xs">submissions.json</code>에, 이미지는 <code className="bg-[#0d1117] px-1.5 py-0.5 rounded text-xs">{`{문제ID}_{날짜}.png`}</code> 파일로 저장됩니다.
+                </p>
+              </section>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-[#30363d] flex justify-end">
+              <button onClick={() => setShowHelp(false)} className="px-5 py-2 bg-[#238636] hover:bg-[#2ea043] rounded-lg text-sm font-semibold text-white cursor-pointer">
+                확인
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

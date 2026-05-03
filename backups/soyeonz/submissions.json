@@ -85,6 +85,15 @@
       "date": "2026-05-03",
       "image": null,
       "timestamp": "17778080305181376"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "42628",
+      "problemName": "이중우선순위큐",
+      "code": "def solution(operations):\n    que = []\n    for o in operations:\n        c, i = o.split()\n        if c == \"I\":\n            que.append(int(i))\n        elif not que:\n            continue\n        elif i == \"-1\":\n            que.remove(min(que))\n        else:\n            que.remove(max(que))\n    if que:\n        return [max(que), min(que)]\n    return [0, 0]",
+      "date": "2026-05-03",
+      "image": null,
+      "timestamp": "17778090899362431"
     }
   ]
 }

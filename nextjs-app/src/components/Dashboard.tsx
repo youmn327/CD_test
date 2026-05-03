@@ -170,6 +170,49 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
 
   const fines = calculateFines();
 
+  // === 월별 벌금 정산: { memberId: { 'YYYY-MM': fine } } ===
+  function calculateFinesByMonth() {
+    const startDate = new Date(BET_START_DATE);
+    const todayDate = new Date(today.toISOString().slice(0, 10));
+    const result: Record<string, Record<string, number>> = {};
+    members.forEach(mem => { result[mem.id] = {}; });
+    if (todayDate < startDate) return result;
+
+    const cur = new Date(startDate);
+    while (cur <= todayDate) {
+      const periodStart = new Date(cur);
+      const periodEnd = new Date(cur);
+      periodEnd.setDate(periodEnd.getDate() + PERIOD_DAYS - 1);
+      if (periodEnd > todayDate) break;
+
+      const startStr = periodStart.toISOString().slice(0, 10);
+      const endStr = periodEnd.toISOString().slice(0, 10);
+      const monthKey = startStr.slice(0, 7);
+
+      members.forEach(mem => {
+        const count = submissions.filter(s =>
+          s.member === mem.id && s.date >= startStr && s.date <= endStr
+        ).length;
+        if (count < REQUIRED_PROBLEMS) {
+          result[mem.id][monthKey] = (result[mem.id][monthKey] || 0) + FINE_PER_PERIOD;
+        }
+      });
+
+      cur.setDate(cur.getDate() + PERIOD_DAYS);
+    }
+    return result;
+  }
+
+  const monthlyFines = calculateFinesByMonth();
+
+  // 월별 합계
+  const monthlyFinesTotalByMonth: Record<string, number> = {};
+  Object.values(monthlyFines).forEach(byMonth => {
+    Object.entries(byMonth).forEach(([month, fine]) => {
+      monthlyFinesTotalByMonth[month] = (monthlyFinesTotalByMonth[month] || 0) + fine;
+    });
+  });
+
   return (
     <>
       {/* 로딩 오버레이 */}
@@ -280,26 +323,65 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
               <tbody>
                 {members.map(member => {
                   const data = monthlyData[member.id] || {};
+                  const fineData = monthlyFines[member.id] || {};
                   let yearTotal = 0;
+                  let yearFine = 0;
                   return (
                     <tr key={member.id} className="border-t border-[#21262d]">
                       <td className="p-2 font-semibold" style={{ color: member.color }}>{member.name}</td>
                       {Array.from({ length: 12 }, (_, i) => {
                         const key = `${selectedYear}-${String(i + 1).padStart(2, '0')}`;
                         const count = data[key] || 0;
+                        const fine = fineData[key] || 0;
                         yearTotal += count;
+                        yearFine += fine;
                         return (
-                          <td key={i} className="p-2 text-center">
+                          <td key={i} className="p-2 text-center align-top">
                             <span className={`inline-block min-w-[28px] px-1.5 py-0.5 rounded font-semibold ${count > 0 ? 'bg-[#58a6ff]/10 text-[#58a6ff]' : 'text-[#484f58]'}`}>
                               {count || '-'}
                             </span>
+                            {fine > 0 && (
+                              <div className="text-[10px] text-red-400 font-semibold mt-0.5">
+                                -{(fine/1000).toFixed(0)}K
+                              </div>
+                            )}
                           </td>
                         );
                       })}
-                      <td className="p-2 text-center text-[#58a6ff] font-bold">{yearTotal}</td>
+                      <td className="p-2 text-center align-top">
+                        <div className="text-[#58a6ff] font-bold">{yearTotal}</div>
+                        {yearFine > 0 && (
+                          <div className="text-[11px] text-red-400 font-semibold mt-0.5">
+                            -{yearFine.toLocaleString()}원
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
+                {/* 월별 합계 행 */}
+                <tr className="border-t-2 border-[#30363d] bg-[#0d1117]">
+                  <td className="p-2 font-semibold text-[#8b949e] text-xs">월별 벌금</td>
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const key = `${selectedYear}-${String(i + 1).padStart(2, '0')}`;
+                    const monthFine = monthlyFinesTotalByMonth[key] || 0;
+                    return (
+                      <td key={i} className="p-2 text-center text-xs">
+                        {monthFine > 0 ? (
+                          <span className="text-red-400 font-bold">{(monthFine/1000).toFixed(0)}K</span>
+                        ) : (
+                          <span className="text-[#484f58]">-</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                  <td className="p-2 text-center text-red-400 font-bold text-xs">
+                    {Object.entries(monthlyFinesTotalByMonth)
+                      .filter(([k]) => k.startsWith(String(selectedYear)))
+                      .reduce((a, [, v]) => a + v, 0)
+                      .toLocaleString()}원
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -361,21 +443,35 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
             </div>
             {/* 월간 요약 */}
             <div className="mt-5 pt-5 border-t border-[#21262d]">
-              <div className="text-sm font-semibold mb-3">{selectedDailyYear}년 {m}월 요약</div>
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div className="text-sm font-semibold">{selectedDailyYear}년 {m}월 요약</div>
+                {(monthlyFinesTotalByMonth[monthKey] || 0) > 0 && (
+                  <div className="text-xs">
+                    <span className="text-[#8b949e]">이번 달 벌금: </span>
+                    <span className="text-red-400 font-bold">{(monthlyFinesTotalByMonth[monthKey] || 0).toLocaleString()}원</span>
+                  </div>
+                )}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                 {members.map(member => {
                   const memberMonthSubs = monthSubs.filter(s => s.member === member.id);
                   const activeDays = new Set(memberMonthSubs.map(s => s.date)).size;
                   const avg = activeDays > 0 ? (memberMonthSubs.length / activeDays).toFixed(1) : '0';
+                  const memberMonthFine = (monthlyFines[member.id] || {})[monthKey] || 0;
                   return (
-                    <div key={member.id} className="flex items-center gap-3 bg-[#0d1117] border border-[#21262d] rounded-lg p-3">
+                    <div key={member.id} className={`flex items-center gap-3 border rounded-lg p-3 ${memberMonthFine > 0 ? 'bg-red-500/5 border-red-500/30' : 'bg-[#0d1117] border-[#21262d]'}`}>
                       <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white shrink-0" style={{ background: member.color }}>
                         {member.name[0]}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <div className="text-xs font-semibold" style={{ color: member.color }}>{member.name}</div>
                         <div className="text-xl font-bold">{memberMonthSubs.length}문제</div>
                         <div className="text-[11px] text-[#8b949e]">{activeDays}일 활동 · 일평균 {avg}문제</div>
+                        {memberMonthFine > 0 && (
+                          <div className="text-[11px] text-red-400 font-semibold mt-0.5">
+                            벌금 {memberMonthFine.toLocaleString()}원 ({memberMonthFine / FINE_PER_PERIOD}회 미달)
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

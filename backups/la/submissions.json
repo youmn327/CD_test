@@ -31,6 +31,15 @@
       "date": "2026-05-03",
       "image": "backups/la/181832_2026-05-03.png",
       "timestamp": "17778159692893392"
+    },
+    {
+      "member": "la",
+      "problemId": "120876",
+      "problemName": "겹치는 선분의 길이",
+      "code": "class Solution {\n    fun solution(lines: Array<IntArray>): Int {\n        var answer = 0\n        val count = IntArray(200) { 0 }\n\n            for (line in lines) {\n                for (i in line[0] until line[1]) {\n                    count[i + 100] += 1\n                }\n            }\n\n            answer += count.count { it > 1 }\n\n            return answer\n    }\n}",
+      "date": "2026-05-03",
+      "image": "backups/la/120876_2026-05-03.png",
+      "timestamp": "17778167801289830"
     }
   ]
 }

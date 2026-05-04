@@ -112,6 +112,15 @@
       "date": "2026-05-04",
       "image": null,
       "timestamp": "17779059177349764"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "12927",
+      "problemName": "야근 지수",
+      "code": "def solution(n, works):\n    if sum(works) <= n:\n            return 0\n    works.sort(reverse=True)\n    while n and sum(works):\n        i = next((i for i in range(len(works)) if works[i] < works[0]), None)\n        if i:\n            minus = works[i - 1] - works[i]\n            while minus * i > n:\n                minus -= 1\n        else:   # 똑같이 남은 경우\n            i = len(works)\n            minus = n // i\n\n        if minus != 0: # 팍팍 깜\n            n -= minus * i\n            works[:i] = [w - minus for w in works[:i]]\n\n        else:\n            for i in range(n):\n                works[i] -= 1\n            n = 0\n    return sum(w ** 2 for w in works)",
+      "date": "2026-05-05",
+      "image": null,
+      "timestamp": "17779106695925357"
     }
   ]
 }

@@ -94,6 +94,15 @@
       "date": "2026-05-03",
       "image": null,
       "timestamp": "17778090899362431"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "12941",
+      "problemName": "최솟값 만들기",
+      "code": "def solution(A,B):\n    A.sort()\n    B.sort(reverse=True)\n    answer = 0\n    for i in range(len(A)):\n        answer += A[i] * B[i]\n    return answer",
+      "date": "2026-05-04",
+      "image": null,
+      "timestamp": "17779043076565807"
     }
   ]
 }

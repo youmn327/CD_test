@@ -142,8 +142,8 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const monthKey = `${selectedDailyYear}-${String(m).padStart(2, '0')}`;
   const monthSubs = submissions.filter(s => s.date.startsWith(monthKey));
 
-  // === 벌금 계산: 2일에 2문제 미만 → 2,000원 ===
-  const FINE_PER_PERIOD = 2000;
+  // === 벌금 계산: 2일 동안 부족한 문제 1개당 2,000원 ===
+  const FINE_PER_PROBLEM = 2000;
   const PERIOD_DAYS = 2;
   const REQUIRED_PROBLEMS = 2;
   const BET_START_DATE = '2026-05-01'; // 내기 시작일
@@ -178,8 +178,9 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         const count = submissions.filter(s =>
           s.member === m.id && s.date >= startStr && s.date <= endStr
         ).length;
-        if (count < REQUIRED_PROBLEMS) {
-          byMember[m.id] = (byMember[m.id] || 0) + FINE_PER_PERIOD;
+        const missing = Math.max(0, REQUIRED_PROBLEMS - count);
+        if (missing > 0) {
+          byMember[m.id] = (byMember[m.id] || 0) + missing * FINE_PER_PROBLEM;
           missed.push({ member: m.id, count });
         }
       });
@@ -220,8 +221,9 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         const count = submissions.filter(s =>
           s.member === mem.id && s.date >= startStr && s.date <= endStr
         ).length;
-        if (count < REQUIRED_PROBLEMS) {
-          result[mem.id][monthKey] = (result[mem.id][monthKey] || 0) + FINE_PER_PERIOD;
+        const missing = Math.max(0, REQUIRED_PROBLEMS - count);
+        if (missing > 0) {
+          result[mem.id][monthKey] = (result[mem.id][monthKey] || 0) + missing * FINE_PER_PROBLEM;
         }
       });
 
@@ -318,18 +320,19 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                 <h4 className="text-base font-semibold text-red-400 mb-2">💰 벌금 규칙</h4>
                 <div className="space-y-2 text-[#e6edf3] leading-relaxed">
                   <p><b>시작일</b>: 2026-05-01부터 적용</p>
-                  <p><b>규칙</b>: 매 2일마다 합산 2문제 이상 풀어야 합니다.</p>
-                  <p><b>미달 시</b>: 2,000원 벌금</p>
+                  <p><b>규칙</b>: 매 2일마다 합산 <b>2문제</b>가 목표</p>
+                  <p><b>벌금</b>: 부족한 문제 <b>1개당 2,000원</b></p>
                   <div className="bg-[#0d1117] rounded p-3 mt-2 text-xs">
                     <div className="font-semibold mb-1.5 text-[#8b949e]">예시 (2일 단위 평가)</div>
                     <div className="space-y-0.5 font-mono">
-                      <div className="text-[#7ee787]">✓ 1일 1문제 + 2일 1문제 = 2문제 → 통과</div>
-                      <div className="text-[#7ee787]">✓ 1일 0문제 + 2일 2문제 = 2문제 → 통과</div>
-                      <div className="text-[#7ee787]">✓ 1일 2문제 + 2일 0문제 = 2문제 → 통과</div>
-                      <div className="text-red-400">✗ 1일 0문제 + 2일 1문제 = 1문제 → <b>2,000원</b></div>
-                      <div className="text-red-400">✗ 1일 0문제 + 2일 0문제 = 0문제 → <b>2,000원</b></div>
+                      <div className="text-[#7ee787]">✓ 1일 1 + 2일 1 = 2문제 → 0원</div>
+                      <div className="text-[#7ee787]">✓ 1일 0 + 2일 2 = 2문제 → 0원</div>
+                      <div className="text-[#7ee787]">✓ 1일 2 + 2일 0 = 2문제 → 0원</div>
+                      <div className="text-yellow-300">△ 1일 0 + 2일 1 = 1문제 → <b>2,000원</b> (1개 부족)</div>
+                      <div className="text-red-400">✗ 1일 0 + 2일 0 = 0문제 → <b>4,000원</b> (2개 부족)</div>
                     </div>
                   </div>
+                  <p className="text-xs text-[#8b949e] mt-2">⚠️ 각 2일 버킷은 독립적으로 평가됩니다. 이전 버킷에 미리 풀어둔 것은 다음 버킷에 적용되지 않습니다.</p>
                 </div>
               </section>
 
@@ -632,7 +635,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                         <div className="text-[11px] text-[#8b949e]">{activeDays}일 활동 · 일평균 {avg}문제</div>
                         {memberMonthFine > 0 && (
                           <div className="text-[11px] text-red-400 font-semibold mt-0.5">
-                            벌금 {memberMonthFine.toLocaleString()}원 ({memberMonthFine / FINE_PER_PERIOD}회 미달)
+                            벌금 {memberMonthFine.toLocaleString()}원 ({memberMonthFine / FINE_PER_PROBLEM}문제 부족)
                           </div>
                         )}
                       </div>
@@ -653,7 +656,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <span>💰 내기 벌금 현황</span>
             </h2>
-            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 합산 2문제 이상 풀이 (1+1 또는 0+2 모두 OK). 미달 시 2,000원 · 시작: 2026-05-01</p>
+            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 동안 부족한 문제 1개당 2,000원 (목표 2문제). 시작: 2026-05-01</p>
           </div>
           <div className="text-right">
             <div className="text-xs text-[#8b949e]">총 벌금</div>
@@ -665,7 +668,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           {members.map(member => {
             const fine = fines.byMember[member.id] || 0;
-            const periods = Math.floor(fine / FINE_PER_PERIOD);
+            const missingProblems = Math.floor(fine / FINE_PER_PROBLEM);
             return (
               <div key={member.id} className={`flex items-center gap-3 border rounded-lg p-3 ${fine > 0 ? 'bg-red-500/5 border-red-500/30' : 'bg-[#0d1117] border-[#21262d]'}`}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0" style={{ background: member.color }}>
@@ -676,8 +679,8 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                   <div className={`text-lg font-bold ${fine > 0 ? 'text-red-400' : 'text-[#7ee787]'}`}>
                     {fine === 0 ? '벌금 없음 ✓' : `${fine.toLocaleString()}원`}
                   </div>
-                  {periods > 0 && (
-                    <div className="text-[11px] text-[#8b949e]">{periods}회 미달성</div>
+                  {missingProblems > 0 && (
+                    <div className="text-[11px] text-[#8b949e]">총 {missingProblems}문제 부족</div>
                   )}
                 </div>
               </div>
@@ -698,9 +701,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                   <div className="flex gap-1.5">
                     {p.missed.map(m => {
                       const member = members.find(mem => mem.id === m.member);
+                      const missing = REQUIRED_PROBLEMS - m.count;
+                      const fineAmt = missing * FINE_PER_PROBLEM;
                       return (
-                        <span key={m.member} className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member?.color || '#8b949e' }} title={`${m.count}문제만 풀이`}>
-                          {member?.name[0] || m.member[0]} {m.count}/2
+                        <span key={m.member} className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member?.color || '#8b949e' }} title={`${m.count}문제만 풀이 → ${fineAmt.toLocaleString()}원`}>
+                          {member?.name[0] || m.member[0]} {m.count}/2 (-{(fineAmt/1000).toFixed(0)}K)
                         </span>
                       );
                     })}

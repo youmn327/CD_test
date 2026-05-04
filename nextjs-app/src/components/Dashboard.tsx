@@ -143,10 +143,44 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const monthSubs = submissions.filter(s => s.date.startsWith(monthKey));
 
   // === 벌금 계산: 2일 동안 부족한 문제 1개당 2,000원 ===
+  // === 크레딧 보너스: 하루 2문제 이상을 연속 2일 이상 풀면 day-2부터 +1 크레딧 ===
+  // === 1크레딧 = 부족 문제 1개 면제 (= 2,000원 절감) ===
   const FINE_PER_PROBLEM = 2000;
   const PERIOD_DAYS = 2;
   const REQUIRED_PROBLEMS = 2;
+  const REQUIRED_DAILY_FOR_CREDIT = 2; // 하루 2문제 이상이면 streak 유효
   const BET_START_DATE = '2026-05-01'; // 내기 시작일
+
+  // 멤버별 일별 풀이 수
+  function getDailyByMember(memberId: string): Record<string, number> {
+    const result: Record<string, number> = {};
+    submissions.forEach(s => {
+      if (s.member === memberId) result[s.date] = (result[s.date] || 0) + 1;
+    });
+    return result;
+  }
+
+  // 멤버별 누적 크레딧 (BET_START_DATE부터 todayDate까지)
+  function calculateCredits(memberId: string, todayDate: Date): number {
+    const startDate = new Date(BET_START_DATE);
+    if (todayDate < startDate) return 0;
+    const dailyCounts = getDailyByMember(memberId);
+    let streak = 0;
+    let credits = 0;
+    const cur = new Date(startDate);
+    while (cur <= todayDate) {
+      const dateStr = cur.toISOString().slice(0, 10);
+      const cnt = dailyCounts[dateStr] || 0;
+      if (cnt >= REQUIRED_DAILY_FOR_CREDIT) {
+        streak++;
+        if (streak >= 2) credits++;
+      } else {
+        streak = 0;
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return credits;
+  }
 
   function calculateFines() {
     const startDate = new Date(BET_START_DATE);
@@ -154,51 +188,82 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
 
     // 시작일이 아직 안 됐으면 빈 결과
     if (todayDate < startDate) {
-      return { byMember: {} as Record<string, number>, total: 0, periods: [] as Array<{start: string, end: string, missed: Array<{member: string, count: number}>}> };
+      return {
+        byMember: {} as Record<string, number>,
+        total: 0,
+        periods: [] as Array<{start: string, end: string, missed: Array<{member: string, count: number, fineAfterCredits: number, usedCredits: number}>}>,
+        creditsByMember: {} as Record<string, { earned: number, used: number, remaining: number }>,
+      };
     }
 
-    const byMember: Record<string, number> = {};
-    members.forEach(m => { byMember[m.id] = 0; });
-    const periods: Array<{start: string, end: string, missed: Array<{member: string, count: number}>}> = [];
+    // 1단계: 각 버킷마다 부족 문제 수집 (멤버별, 시간순)
+    const bucketsByMember: Record<string, Array<{ start: string, end: string, count: number, missing: number }>> = {};
+    members.forEach(m => { bucketsByMember[m.id] = []; });
 
     const cur = new Date(startDate);
     while (cur <= todayDate) {
       const periodStart = new Date(cur);
       const periodEnd = new Date(cur);
       periodEnd.setDate(periodEnd.getDate() + PERIOD_DAYS - 1);
-
-      // 현재 진행 중인 기간은 제외 (아직 끝나지 않음)
       if (periodEnd > todayDate) break;
 
       const startStr = periodStart.toISOString().slice(0, 10);
       const endStr = periodEnd.toISOString().slice(0, 10);
-      const missed: Array<{member: string, count: number}> = [];
 
       members.forEach(m => {
         const count = submissions.filter(s =>
           s.member === m.id && s.date >= startStr && s.date <= endStr
         ).length;
         const missing = Math.max(0, REQUIRED_PROBLEMS - count);
-        if (missing > 0) {
-          byMember[m.id] = (byMember[m.id] || 0) + missing * FINE_PER_PROBLEM;
-          missed.push({ member: m.id, count });
-        }
+        bucketsByMember[m.id].push({ start: startStr, end: endStr, count, missing });
       });
-
-      if (missed.length > 0) {
-        periods.push({ start: startStr, end: endStr, missed });
-      }
 
       cur.setDate(cur.getDate() + PERIOD_DAYS);
     }
 
+    // 2단계: 멤버별 크레딧 계산 + 시간순으로 부족 문제에 적용
+    const byMember: Record<string, number> = {};
+    const creditsByMember: Record<string, { earned: number, used: number, remaining: number }> = {};
+    const periodsMap: Record<string, Array<{ member: string, count: number, fineAfterCredits: number, usedCredits: number }>> = {};
+
+    members.forEach(mem => {
+      const earned = calculateCredits(mem.id, todayDate);
+      let available = earned;
+      let totalFine = 0;
+      let totalUsed = 0;
+
+      bucketsByMember[mem.id].forEach(b => {
+        if (b.missing > 0) {
+          const useHere = Math.min(b.missing, available);
+          available -= useHere;
+          totalUsed += useHere;
+          const remainingMissing = b.missing - useHere;
+          const fineHere = remainingMissing * FINE_PER_PROBLEM;
+          totalFine += fineHere;
+
+          const key = `${b.start}~${b.end}`;
+          if (!periodsMap[key]) periodsMap[key] = [];
+          periodsMap[key].push({ member: mem.id, count: b.count, fineAfterCredits: fineHere, usedCredits: useHere });
+        }
+      });
+
+      byMember[mem.id] = totalFine;
+      creditsByMember[mem.id] = { earned, used: totalUsed, remaining: earned - totalUsed };
+    });
+
+    // periods 배열로 변환
+    const periods = Object.entries(periodsMap).map(([key, missed]) => {
+      const [start, end] = key.split('~');
+      return { start, end, missed };
+    }).sort((a, b) => a.start.localeCompare(b.start));
+
     const total = Object.values(byMember).reduce((a, b) => a + b, 0);
-    return { byMember, total, periods };
+    return { byMember, total, periods, creditsByMember };
   }
 
   const fines = calculateFines();
 
-  // === 월별 벌금 정산: { memberId: { 'YYYY-MM': fine } } ===
+  // === 월별 벌금 정산 (크레딧 반영): { memberId: { 'YYYY-MM': fine } } ===
   function calculateFinesByMonth() {
     const startDate = new Date(BET_START_DATE);
     const todayDate = new Date(today.toISOString().slice(0, 10));
@@ -206,29 +271,36 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
     members.forEach(mem => { result[mem.id] = {}; });
     if (todayDate < startDate) return result;
 
-    const cur = new Date(startDate);
-    while (cur <= todayDate) {
-      const periodStart = new Date(cur);
-      const periodEnd = new Date(cur);
-      periodEnd.setDate(periodEnd.getDate() + PERIOD_DAYS - 1);
-      if (periodEnd > todayDate) break;
+    // 각 멤버별 시간순 버킷 처리 + 크레딧 적용
+    members.forEach(mem => {
+      let available = calculateCredits(mem.id, todayDate);
+      const cur = new Date(startDate);
+      while (cur <= todayDate) {
+        const periodStart = new Date(cur);
+        const periodEnd = new Date(cur);
+        periodEnd.setDate(periodEnd.getDate() + PERIOD_DAYS - 1);
+        if (periodEnd > todayDate) break;
 
-      const startStr = periodStart.toISOString().slice(0, 10);
-      const endStr = periodEnd.toISOString().slice(0, 10);
-      const monthKey = startStr.slice(0, 7);
+        const startStr = periodStart.toISOString().slice(0, 10);
+        const endStr = periodEnd.toISOString().slice(0, 10);
+        const monthKey = startStr.slice(0, 7);
 
-      members.forEach(mem => {
         const count = submissions.filter(s =>
           s.member === mem.id && s.date >= startStr && s.date <= endStr
         ).length;
         const missing = Math.max(0, REQUIRED_PROBLEMS - count);
         if (missing > 0) {
-          result[mem.id][monthKey] = (result[mem.id][monthKey] || 0) + missing * FINE_PER_PROBLEM;
+          const useHere = Math.min(missing, available);
+          available -= useHere;
+          const remainingMissing = missing - useHere;
+          if (remainingMissing > 0) {
+            result[mem.id][monthKey] = (result[mem.id][monthKey] || 0) + remainingMissing * FINE_PER_PROBLEM;
+          }
         }
-      });
 
-      cur.setDate(cur.getDate() + PERIOD_DAYS);
-    }
+        cur.setDate(cur.getDate() + PERIOD_DAYS);
+      }
+    });
     return result;
   }
 
@@ -332,7 +404,28 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                       <div className="text-red-400">✗ 1일 0 + 2일 0 = 0문제 → <b>4,000원</b> (2개 부족)</div>
                     </div>
                   </div>
-                  <p className="text-xs text-[#8b949e] mt-2">⚠️ 각 2일 버킷은 독립적으로 평가됩니다. 이전 버킷에 미리 풀어둔 것은 다음 버킷에 적용되지 않습니다.</p>
+                  <p className="text-xs text-[#8b949e] mt-2">⚠️ 각 2일 버킷은 독립적으로 평가됩니다.</p>
+                </div>
+              </section>
+
+              {/* 연속 풀이 보너스 */}
+              <section className="bg-yellow-500/5 border border-yellow-500/30 rounded-lg p-4">
+                <h4 className="text-base font-semibold text-yellow-400 mb-2">⭐ 연속 풀이 보너스 (크레딧)</h4>
+                <div className="space-y-2 text-[#e6edf3] leading-relaxed">
+                  <p><b>획득 조건</b>: 하루 <b>2문제 이상</b>을 <b>연속 2일 이상</b> 풀이 시</p>
+                  <p><b>적립</b>: 연속 2일째부터 매일 <b>+1 크레딧</b></p>
+                  <p><b>사용</b>: 부족한 문제 1개당 <b>1 크레딧</b>으로 자동 면제 (= 2,000원 절감)</p>
+                  <div className="bg-[#0d1117] rounded p-3 mt-2 text-xs">
+                    <div className="font-semibold mb-1.5 text-[#8b949e]">예시</div>
+                    <div className="space-y-0.5 font-mono">
+                      <div>5/1: 2문제 → streak 1 (크레딧 0)</div>
+                      <div>5/2: 2문제 → streak 2 → <span className="text-yellow-300">+1 ⭐</span></div>
+                      <div>5/3: 2문제 → streak 3 → <span className="text-yellow-300">+1 ⭐</span></div>
+                      <div>5/4: 0문제 → streak 끊김 (크레딧 2개 보유)</div>
+                      <div>5/5~6 버킷: 0+0=0 (2부족) → <span className="text-yellow-300">⭐2 사용</span> → <span className="text-[#7ee787]">0원 ✓</span></div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[#8b949e] mt-2">💡 미리 많이 풀어두면 휴식일을 만들 수 있습니다.</p>
                 </div>
               </section>
 
@@ -669,6 +762,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
           {members.map(member => {
             const fine = fines.byMember[member.id] || 0;
             const missingProblems = Math.floor(fine / FINE_PER_PROBLEM);
+            const credits = fines.creditsByMember[member.id] || { earned: 0, used: 0, remaining: 0 };
             return (
               <div key={member.id} className={`flex items-center gap-3 border rounded-lg p-3 ${fine > 0 ? 'bg-red-500/5 border-red-500/30' : 'bg-[#0d1117] border-[#21262d]'}`}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shrink-0" style={{ background: member.color }}>
@@ -681,6 +775,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                   </div>
                   {missingProblems > 0 && (
                     <div className="text-[11px] text-[#8b949e]">총 {missingProblems}문제 부족</div>
+                  )}
+                  {credits.earned > 0 && (
+                    <div className="text-[11px] text-yellow-400 font-semibold mt-0.5" title="연속 풀이 보너스">
+                      ⭐ 크레딧 {credits.remaining}개 (획득 {credits.earned} · 사용 {credits.used})
+                    </div>
                   )}
                 </div>
               </div>
@@ -701,11 +800,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                   <div className="flex gap-1.5">
                     {p.missed.map(m => {
                       const member = members.find(mem => mem.id === m.member);
-                      const missing = REQUIRED_PROBLEMS - m.count;
-                      const fineAmt = missing * FINE_PER_PROBLEM;
+                      const fineDisplay = m.fineAfterCredits > 0 ? `-${(m.fineAfterCredits/1000).toFixed(0)}K` : '면제';
+                      const tooltip = `${m.count}문제 풀이${m.usedCredits > 0 ? ` · 크레딧 ${m.usedCredits}개 사용` : ''} · 벌금 ${m.fineAfterCredits.toLocaleString()}원`;
                       return (
-                        <span key={m.member} className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: member?.color || '#8b949e' }} title={`${m.count}문제만 풀이 → ${fineAmt.toLocaleString()}원`}>
-                          {member?.name[0] || m.member[0]} {m.count}/2 (-{(fineAmt/1000).toFixed(0)}K)
+                        <span key={m.member} className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${m.fineAfterCredits === 0 ? 'opacity-60' : ''}`} style={{ background: member?.color || '#8b949e' }} title={tooltip}>
+                          {member?.name[0] || m.member[0]} {m.count}/2 {m.usedCredits > 0 && <span className="text-yellow-200">⭐{m.usedCredits}</span>} {fineDisplay}
                         </span>
                       );
                     })}

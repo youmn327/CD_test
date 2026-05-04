@@ -40,6 +40,15 @@
       "date": "2026-05-03",
       "image": "backups/la/120876_2026-05-03.png",
       "timestamp": "17778167801289830"
+    },
+    {
+      "member": "la",
+      "problemId": "181916",
+      "problemName": "주사위 게임 3",
+      "code": "import kotlin.math.abs\n\nclass Solution {\n    fun solution(a: Int, b: Int, c: Int, d: Int): Int {\n        var answer: Int = 0\n        \n        if (a == b && b == c && c == d && a == d) answer = 1111 * a\n        \n        else if (a == b && b == c && a != d) answer = ( 10 * a + d ) * ( 10 * a + d )\n        else if (a == c && c == d && a != b) answer = ( 10 * a + b ) * ( 10 * a + b )\n        else if (b == c && c == d && b != a) answer = ( 10 * b + a ) * ( 10 * b + a )\n        else if (a == b && b == d && a != c) answer = ( 10 * a + c ) * ( 10 * a + c )\n        \n        else if (a == b && c == d && a != c) answer = (a + c) * abs(a - c)\n        else if (a == c && b == d && a != b) answer = (a + b) * abs(a - b)\n        else if (a == d && b == c && a != b) answer = (a + b) * abs(a - b)\n        \n        else if (a == b) answer = c * d\n        else if (a == c) answer = b * d\n        else if (a == d) answer = b * c\n        else if (b == c) answer = a * d\n        else if (b == d) answer = a * c\n        else if (c == d) answer = a * b\n        \n        else answer = minOf(a, b, c, d)\n        \n        return answer\n    }\n}",
+      "date": "2026-05-04",
+      "image": "backups/la/181916_2026-05-04.png",
+      "timestamp": "17779021017724083"
     }
   ]
 }

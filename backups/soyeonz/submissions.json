@@ -103,6 +103,15 @@
       "date": "2026-05-04",
       "image": null,
       "timestamp": "17779043076565807"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "43162",
+      "problemName": "네트워크",
+      "code": "def solution(n, computers):\n    answer = 0\n    connected = [False] * n\n\n    def net(c):\n        connected[c] = True\n        for i in range(n):\n            if i != c and not connected[i] and computers[c][i]:\n                net(i)\n\n    for i in range(n):\n        if connected[i]:\n            continue\n        net(i)\n        answer += 1\n    return answer",
+      "date": "2026-05-04",
+      "image": null,
+      "timestamp": "17779059177349764"
     }
   ]
 }

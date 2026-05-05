@@ -142,10 +142,10 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const monthKey = `${selectedDailyYear}-${String(m).padStart(2, '0')}`;
   const monthSubs = submissions.filter(s => s.date.startsWith(monthKey));
 
-  // === 벌금 계산: 2일 동안 부족한 문제 1개당 2,000원 ===
+  // === 벌금 계산: 부족한 문제 1개당 1,000원 (하루 1문제 = 1,000원) ===
   // === 크레딧 보너스: 하루 2문제 이상을 연속 2일 이상 풀면 day-2부터 +1 크레딧 ===
-  // === 1크레딧 = 부족 문제 1개 면제 (= 2,000원 절감) ===
-  const FINE_PER_PROBLEM = 2000;
+  // === 1크레딧 = 부족 문제 1개 면제 (= 1,000원 절감) ===
+  const FINE_PER_PROBLEM = 1000;
   const PERIOD_DAYS = 2;
   const REQUIRED_PROBLEMS = 2;
   const REQUIRED_DAILY_FOR_CREDIT = 2; // 하루 2문제 이상이면 streak 유효
@@ -392,16 +392,16 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                 <h4 className="text-base font-semibold text-red-400 mb-2">💰 벌금 규칙</h4>
                 <div className="space-y-2 text-[#e6edf3] leading-relaxed">
                   <p><b>시작일</b>: 2026-05-01부터 적용</p>
-                  <p><b>규칙</b>: 매 2일마다 합산 <b>2문제</b>가 목표</p>
-                  <p><b>벌금</b>: 부족한 문제 <b>1개당 2,000원</b></p>
+                  <p><b>규칙</b>: 매 2일마다 합산 <b>2문제</b>가 목표 (하루 1문제 페이스)</p>
+                  <p><b>벌금</b>: 부족한 문제 <b>1개당 1,000원</b> (= 하루 안 풀면 1,000원)</p>
                   <div className="bg-[#0d1117] rounded p-3 mt-2 text-xs">
                     <div className="font-semibold mb-1.5 text-[#8b949e]">예시 (2일 단위 평가)</div>
                     <div className="space-y-0.5 font-mono">
                       <div className="text-[#7ee787]">✓ 1일 1 + 2일 1 = 2문제 → 0원</div>
                       <div className="text-[#7ee787]">✓ 1일 0 + 2일 2 = 2문제 → 0원</div>
                       <div className="text-[#7ee787]">✓ 1일 2 + 2일 0 = 2문제 → 0원</div>
-                      <div className="text-yellow-300">△ 1일 0 + 2일 1 = 1문제 → <b>2,000원</b> (1개 부족)</div>
-                      <div className="text-red-400">✗ 1일 0 + 2일 0 = 0문제 → <b>4,000원</b> (2개 부족)</div>
+                      <div className="text-yellow-300">△ 1일 0 + 2일 1 = 1문제 → <b>1,000원</b> (1개 부족)</div>
+                      <div className="text-red-400">✗ 1일 0 + 2일 0 = 0문제 → <b>2,000원</b> (2개 부족)</div>
                     </div>
                   </div>
                   <p className="text-xs text-[#8b949e] mt-2">⚠️ 각 2일 버킷은 독립적으로 평가됩니다.</p>
@@ -414,7 +414,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                 <div className="space-y-2 text-[#e6edf3] leading-relaxed">
                   <p><b>획득 조건</b>: 하루 <b>2문제 이상</b>을 <b>연속 2일 이상</b> 풀이 시</p>
                   <p><b>적립</b>: 연속 2일째부터 매일 <b>+1 크레딧</b></p>
-                  <p><b>사용</b>: 부족한 문제 1개당 <b>1 크레딧</b>으로 자동 면제 (= 2,000원 절감)</p>
+                  <p><b>사용</b>: 부족한 문제 1개당 <b>1 크레딧</b>으로 자동 면제 (= 1,000원 절감)</p>
                   <div className="bg-[#0d1117] rounded p-3 mt-2 text-xs">
                     <div className="font-semibold mb-1.5 text-[#8b949e]">예시</div>
                     <div className="space-y-0.5 font-mono">
@@ -749,7 +749,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <span>💰 내기 벌금 현황</span>
             </h2>
-            <p className="text-xs text-[#8b949e] mt-1">규칙: 2일 동안 부족한 문제 1개당 2,000원 (목표 2문제). 시작: 2026-05-01</p>
+            <p className="text-xs text-[#8b949e] mt-1">규칙: 하루 1문제 (2일 합산 2문제 목표). 부족분 1개당 1,000원. 시작: 2026-05-01</p>
           </div>
           <div className="text-right">
             <div className="text-xs text-[#8b949e]">총 벌금</div>

@@ -431,22 +431,33 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
 
               {/* 캘린더 색상 */}
               <section>
-                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">🎨 캘린더 색상 의미</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-                  <div className="bg-[#0d1117] border border-[#21262d] rounded p-2 text-center">
-                    <div className="text-[#8b949e]">0문제</div>
+                <h4 className="text-base font-semibold text-[#58a6ff] mb-2">🎨 캘린더 표시 의미</h4>
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-xs text-[#8b949e] mb-1.5">활동량 (배경색)</div>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                      <div className="bg-[#0d1117] border border-[#21262d] rounded p-2 text-center">0문제</div>
+                      <div className="bg-green-500/10 border border-[#21262d] rounded p-2 text-center">1문제</div>
+                      <div className="bg-green-500/20 border border-[#21262d] rounded p-2 text-center">2-4문제</div>
+                      <div className="bg-green-500/30 border border-[#21262d] rounded p-2 text-center">5-9문제</div>
+                      <div className="bg-green-500/40 border border-[#21262d] rounded p-2 text-center">10+문제</div>
+                    </div>
                   </div>
-                  <div className="bg-green-500/10 border border-[#21262d] rounded p-2 text-center">
-                    <div>1문제</div>
-                  </div>
-                  <div className="bg-green-500/20 border border-[#21262d] rounded p-2 text-center">
-                    <div>2-4문제</div>
-                  </div>
-                  <div className="bg-green-500/30 border border-[#21262d] rounded p-2 text-center">
-                    <div>5-9문제</div>
-                  </div>
-                  <div className="bg-green-500/40 border border-[#21262d] rounded p-2 text-center">
-                    <div>10+문제</div>
+                  <div>
+                    <div className="text-xs text-[#8b949e] mb-1.5">2일 버킷 그룹 (벌금 평가 단위)</div>
+                    <div className="flex gap-2 text-xs">
+                      <div className="flex-1 border-2 border-[#58a6ff] rounded p-2 text-center bg-[#58a6ff]/5">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white bg-[#58a6ff]">D1</span>
+                        <span className="ml-1">또는</span>
+                        <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded text-white bg-[#58a6ff]">D2</span>
+                      </div>
+                      <div className="flex-1 border-2 border-[#a371f7] rounded p-2 text-center bg-[#a371f7]/5">
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white bg-[#a371f7]">D1</span>
+                        <span className="ml-1">또는</span>
+                        <span className="ml-1 text-[10px] font-bold px-1.5 py-0.5 rounded text-white bg-[#a371f7]">D2</span>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-[#8b949e] mt-1.5">파란/보라 테두리가 한 묶음 (2일). D1=첫째날, D2=둘째날, B1/B2=버킷 번호</div>
                   </div>
                 </div>
               </section>
@@ -685,22 +696,53 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                       bucketIdx = Math.floor(dayDiff / PERIOD_DAYS);
                       posInBucket = dayDiff % PERIOD_DAYS;
                     }
-                    // 버킷 시각화 클래스 (짝/홀로 살짝 다르게)
-                    const bucketBgTint = bucketIdx >= 0
-                      ? (bucketIdx % 2 === 0 ? 'border-l-2 border-l-blue-400/50' : 'border-l-2 border-l-purple-400/50')
-                      : '';
-                    const bucketRightTint = bucketIdx >= 0 && posInBucket === 1
-                      ? (bucketIdx % 2 === 0 ? 'border-r-2 border-r-blue-400/50' : 'border-r-2 border-r-purple-400/50')
-                      : '';
+                    // 버킷 시각화 - 짙은 양쪽 테두리 + 같은 행에서는 연결 효과
+                    const isBlueGroup = bucketIdx >= 0 && bucketIdx % 2 === 0;
+                    const groupColor = isBlueGroup ? '#58a6ff' : '#a371f7';
+                    const isFirstOfPair = posInBucket === 0;
+                    const isSecondOfPair = posInBucket === 1;
+                    // 같은 주(week)에서 짝이 이어지는지 (첫째날이고 dow !== 6)
+                    const pairContinuesInRow = isFirstOfPair && dow !== 6;
+                    // 같은 주에서 짝이 시작했는지 (둘째날이고 dow !== 0)
+                    const pairStartedInRow = isSecondOfPair && dow !== 0;
 
                     return (
-                      <div key={dow} className={`min-h-[100px] border rounded-lg p-2 flex flex-col transition-all ${isToday ? 'border-[#58a6ff] ring-1 ring-[#58a6ff]/40' : 'border-[#21262d] hover:border-[#30363d]'} ${bucketBgTint} ${bucketRightTint} ${isFuture ? 'opacity-30' : ''} ${bgColors[intensity]}`} title={`${dateStr} - ${totalCount}문제${bucketIdx >= 0 ? ` · 버킷 ${bucketIdx + 1} (${posInBucket + 1}/2)` : ''}`}>
+                      <div
+                        key={dow}
+                        className={`min-h-[110px] border-2 p-2 flex flex-col transition-all relative ${isToday ? 'border-[#58a6ff] ring-2 ring-[#58a6ff]/40' : 'border-[#21262d] hover:border-[#30363d]'} ${isFuture ? 'opacity-30' : ''} ${bgColors[intensity]}`}
+                        style={{
+                          borderTopLeftRadius: bucketIdx < 0 || isFirstOfPair ? '0.5rem' : pairStartedInRow ? '0' : '0.5rem',
+                          borderBottomLeftRadius: bucketIdx < 0 || isFirstOfPair ? '0.5rem' : pairStartedInRow ? '0' : '0.5rem',
+                          borderTopRightRadius: bucketIdx < 0 || isSecondOfPair ? '0.5rem' : pairContinuesInRow ? '0' : '0.5rem',
+                          borderBottomRightRadius: bucketIdx < 0 || isSecondOfPair ? '0.5rem' : pairContinuesInRow ? '0' : '0.5rem',
+                          ...(bucketIdx >= 0 && !isToday ? {
+                            borderLeftColor: isFirstOfPair ? groupColor : (pairStartedInRow ? 'transparent' : groupColor),
+                            borderRightColor: isSecondOfPair ? groupColor : (pairContinuesInRow ? 'transparent' : groupColor),
+                            borderTopColor: groupColor + '60',
+                            borderBottomColor: groupColor + '60',
+                          } : {}),
+                        }}
+                        title={`${dateStr} - ${totalCount}문제${bucketIdx >= 0 ? ` · 버킷 ${bucketIdx + 1} (${posInBucket + 1}/2)` : ''}`}
+                      >
+                        {/* 버킷 번호 배지 (좌측 상단 모서리) */}
+                        {bucketIdx >= 0 && isFirstOfPair && (
+                          <div
+                            className="absolute -top-2 left-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-white shadow-md z-10"
+                            style={{ background: groupColor }}
+                          >
+                            B{bucketIdx + 1}
+                          </div>
+                        )}
                         <div className="flex items-center justify-between mb-1.5">
                           <span className={`text-xs font-bold ${isToday ? 'text-[#58a6ff]' : isWeekend ? 'text-red-400' : 'text-[#e6edf3]'}`}>{day}</span>
                           <div className="flex items-center gap-1">
                             {bucketIdx >= 0 && (
-                              <span className={`text-[9px] font-bold px-1 rounded ${bucketIdx % 2 === 0 ? 'bg-blue-400/20 text-blue-300' : 'bg-purple-400/20 text-purple-300'}`} title={`버킷 ${bucketIdx + 1} - ${posInBucket + 1}일째`}>
-                                {posInBucket === 0 ? '①' : '②'}
+                              <span
+                                className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white"
+                                style={{ background: groupColor }}
+                                title={`버킷 ${bucketIdx + 1} - ${posInBucket + 1}일째`}
+                              >
+                                {posInBucket === 0 ? 'D1' : 'D2'}
                               </span>
                             )}
                             {totalCount > 0 && (

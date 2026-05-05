@@ -121,6 +121,15 @@
       "date": "2026-05-05",
       "image": null,
       "timestamp": "17779106695925357"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "12925",
+      "problemName": "문자열을 정수로 바꾸기",
+      "code": "스크린샷",
+      "date": "2026-05-06",
+      "image": "backups/soyeonz/12925_2026-05-06.jpg",
+      "timestamp": "17779983549061252"
     }
   ]
 }

@@ -58,6 +58,15 @@
       "date": "2026-05-06",
       "image": "backups/nym/12930_2026-05-06.png",
       "timestamp": "17779960646214649"
+    },
+    {
+      "member": "nym",
+      "problemId": "181904",
+      "problemName": "세로 읽기",
+      "code": "def solution(my_string, m, c):\n    \n        \n    my_array = []\n    answer = \"\"\n    for idx in range(0,len(my_string),m):\n        my_array.append(my_string[idx:idx+m])\n    \n    for arr in my_array:\n        answer+= arr[c-1]\n    \n    return answer",
+      "date": "2026-05-06",
+      "image": "backups/nym/181904_2026-05-06.png",
+      "timestamp": "17779969276561179"
     }
   ]
 }

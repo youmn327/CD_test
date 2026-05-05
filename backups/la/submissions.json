@@ -49,6 +49,15 @@
       "date": "2026-05-04",
       "image": "backups/la/181916_2026-05-04.png",
       "timestamp": "17779021017724083"
+    },
+    {
+      "member": "la",
+      "problemId": "120808",
+      "problemName": "분수의 덧셈",
+      "code": "class Solution {\n    fun solution(numer1: Int, denom1: Int, numer2: Int, denom2: Int): IntArray {\n        var answer: IntArray = intArrayOf()\n        var commonNumer = (numer1 * denom2) + (numer2 * denom1)\n        var commonDenom = denom1 * denom2\n\n        fun getGCD(a: Int, b: Int): Int {\n            return if (b == 0) a else getGCD(b, a % b)\n        }\n\n        val gcd = getGCD(commonNumer, commonDenom)\n        \n        answer = intArrayOf(commonNumer / gcd, commonDenom / gcd)\n        return answer\n    }\n}",
+      "date": "2026-05-05",
+      "image": "backups/la/120808_2026-05-05.png",
+      "timestamp": "17779482027757527"
     }
   ]
 }

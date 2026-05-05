@@ -674,13 +674,39 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                     const bgColors = ['', 'bg-green-500/10', 'bg-green-500/20', 'bg-green-500/30', 'bg-green-500/40'];
                     const dateStr = `${selectedDailyYear}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
                     const isFuture = new Date(dateStr) > today;
+
+                    // 2일 버킷 그룹 표시 (BET_START_DATE 이후만)
+                    const cellDate = new Date(dateStr);
+                    const betStart = new Date(BET_START_DATE);
+                    let bucketIdx = -1;
+                    let posInBucket = -1; // 0: 첫째날, 1: 둘째날
+                    if (cellDate >= betStart) {
+                      const dayDiff = Math.floor((cellDate.getTime() - betStart.getTime()) / (24 * 60 * 60 * 1000));
+                      bucketIdx = Math.floor(dayDiff / PERIOD_DAYS);
+                      posInBucket = dayDiff % PERIOD_DAYS;
+                    }
+                    // 버킷 시각화 클래스 (짝/홀로 살짝 다르게)
+                    const bucketBgTint = bucketIdx >= 0
+                      ? (bucketIdx % 2 === 0 ? 'border-l-2 border-l-blue-400/50' : 'border-l-2 border-l-purple-400/50')
+                      : '';
+                    const bucketRightTint = bucketIdx >= 0 && posInBucket === 1
+                      ? (bucketIdx % 2 === 0 ? 'border-r-2 border-r-blue-400/50' : 'border-r-2 border-r-purple-400/50')
+                      : '';
+
                     return (
-                      <div key={dow} className={`min-h-[100px] border rounded-lg p-2 flex flex-col transition-all ${isToday ? 'border-[#58a6ff] ring-1 ring-[#58a6ff]/40' : 'border-[#21262d] hover:border-[#30363d]'} ${isFuture ? 'opacity-30' : ''} ${bgColors[intensity]}`} title={`${dateStr} - ${totalCount}문제`}>
+                      <div key={dow} className={`min-h-[100px] border rounded-lg p-2 flex flex-col transition-all ${isToday ? 'border-[#58a6ff] ring-1 ring-[#58a6ff]/40' : 'border-[#21262d] hover:border-[#30363d]'} ${bucketBgTint} ${bucketRightTint} ${isFuture ? 'opacity-30' : ''} ${bgColors[intensity]}`} title={`${dateStr} - ${totalCount}문제${bucketIdx >= 0 ? ` · 버킷 ${bucketIdx + 1} (${posInBucket + 1}/2)` : ''}`}>
                         <div className="flex items-center justify-between mb-1.5">
                           <span className={`text-xs font-bold ${isToday ? 'text-[#58a6ff]' : isWeekend ? 'text-red-400' : 'text-[#e6edf3]'}`}>{day}</span>
-                          {totalCount > 0 && (
-                            <span className="text-[10px] text-[#8b949e] font-semibold">{totalCount}</span>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {bucketIdx >= 0 && (
+                              <span className={`text-[9px] font-bold px-1 rounded ${bucketIdx % 2 === 0 ? 'bg-blue-400/20 text-blue-300' : 'bg-purple-400/20 text-purple-300'}`} title={`버킷 ${bucketIdx + 1} - ${posInBucket + 1}일째`}>
+                                {posInBucket === 0 ? '①' : '②'}
+                              </span>
+                            )}
+                            {totalCount > 0 && (
+                              <span className="text-[10px] text-[#8b949e] font-semibold">{totalCount}</span>
+                            )}
+                          </div>
                         </div>
                         <div className="flex flex-col gap-0.5 items-stretch">
                           {members.map(member => {

@@ -24,6 +24,7 @@ export default function MemberPage({ member, initialSubmissions, problems, initi
   const [maintenance] = useState(initialMaintenance);
   const [activeLevel, setActiveLevel] = useState(0);
   const [activePage, setActivePage] = useState(0);
+  const [showStats, setShowStats] = useState(false);
 
   // 레벨별 그룹 + 페이지 분할
   const grouped = groupByLevel(problems);
@@ -31,6 +32,23 @@ export default function MemberPage({ member, initialSubmissions, problems, initi
   const currentLevelProblems = grouped[activeLevel] || [];
   const pages = paginateProblems(currentLevelProblems, 30);
   const currentPageProblems = pages[activePage] || [];
+
+  // 레벨별 풀이 통계
+  const problemIdToLevel: Record<string, number> = {};
+  problems.forEach(p => { problemIdToLevel[p.id] = p.level; });
+  const levelStats: Record<number, { solved: number, total: number }> = {};
+  [0, 1, 2, 3, 4, 5].forEach(lv => {
+    levelStats[lv] = { solved: 0, total: (grouped[lv] || []).length };
+  });
+  // 중복 제출 제거 (같은 문제 여러번 제출 시 1번으로 카운트)
+  const solvedSet = new Set<string>();
+  submissions.forEach(s => {
+    if (!solvedSet.has(s.problemId)) {
+      solvedSet.add(s.problemId);
+      const lv = problemIdToLevel[s.problemId];
+      if (lv !== undefined && levelStats[lv]) levelStats[lv].solved++;
+    }
+  });
 
   // 한국 시간 기준 날짜
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
@@ -147,8 +165,72 @@ export default function MemberPage({ member, initialSubmissions, problems, initi
           {member.name[0]}
         </div>
         <h1 className="text-2xl font-bold">{member.name}</h1>
-        <p className="text-[#8b949e] text-sm">프로그래머스 풀이 제출</p>
+        <p className="text-[#8b949e] text-sm mb-3">프로그래머스 풀이 제출</p>
+        <button
+          onClick={() => setShowStats(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] rounded-lg text-sm text-[#8b949e] hover:text-white transition-colors cursor-pointer"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 1.75a.75.75 0 00-1.5 0v12.5c0 .414.336.75.75.75h14.5a.75.75 0 000-1.5H1.5V1.75zm14.28 2.53a.75.75 0 00-1.06-1.06L10 7.94 7.53 5.47a.75.75 0 00-1.06 0L3.22 8.72a.75.75 0 001.06 1.06L7 7.06l2.47 2.47a.75.75 0 001.06 0l5.25-5.25z"/></svg>
+          <span>📊 레벨별 풀이 통계</span>
+        </button>
       </div>
+
+      {/* 레벨별 통계 모달 */}
+      {showStats && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[1500] p-4 overflow-y-auto" onClick={e => { if (e.target === e.currentTarget) setShowStats(false); }}>
+          <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 w-full max-w-[500px] my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-5 pb-3 border-b border-[#30363d]">
+              <h3 className="text-xl font-bold flex items-center gap-2">
+                <span className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white" style={{ background: member.color }}>{member.name[0]}</span>
+                <span>{member.name} 레벨별 통계</span>
+              </h3>
+              <button onClick={() => setShowStats(false)} className="text-[#8b949e] hover:text-white text-2xl cursor-pointer leading-none">×</button>
+            </div>
+
+            {/* 전체 요약 */}
+            <div className="bg-[#0d1117] border border-[#21262d] rounded-lg p-4 mb-4 text-center">
+              <div className="text-xs text-[#8b949e] mb-1">총 풀이</div>
+              <div className="text-3xl font-bold" style={{ color: member.color }}>
+                {solvedSet.size}<span className="text-base text-[#8b949e]"> / {problems.length}</span>
+              </div>
+              <div className="text-xs text-[#8b949e] mt-1">
+                {Math.round((solvedSet.size / problems.length) * 100)}% 완료
+              </div>
+            </div>
+
+            {/* 레벨별 통계 */}
+            <div className="space-y-2.5">
+              {[0, 1, 2, 3, 4, 5].map(lv => {
+                const stat = levelStats[lv];
+                if (stat.total === 0) return null;
+                const pct = stat.total > 0 ? Math.round((stat.solved / stat.total) * 100) : 0;
+                const colors = ['#7ee787', '#58a6ff', '#a371f7', '#f0883e', '#f85149', '#db61a2'];
+                const color = colors[lv];
+                return (
+                  <div key={lv} className="bg-[#0d1117] border border-[#21262d] rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-xs font-bold text-white" style={{ background: color }}>Lv.{lv}</span>
+                        <span className="text-sm font-semibold">{stat.solved}<span className="text-[#8b949e]"> / {stat.total}문제</span></span>
+                      </div>
+                      <span className="text-xs font-bold" style={{ color }}>{pct}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-[#21262d] rounded overflow-hidden">
+                      <div className="h-full rounded transition-all" style={{ width: `${pct}%`, background: color }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-[#30363d] flex justify-end">
+              <button onClick={() => setShowStats(false)} className="px-5 py-2 bg-[#238636] hover:bg-[#2ea043] rounded-lg text-sm font-semibold text-white cursor-pointer">
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 제출 폼 */}
       <div className="bg-[#161b22] border border-[#30363d] rounded-xl p-6 mb-6">

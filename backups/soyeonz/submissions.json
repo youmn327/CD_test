@@ -175,6 +175,15 @@
       "date": "2026-05-09",
       "image": null,
       "timestamp": "17783254202479747"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "12911",
+      "problemName": "다음 큰 숫자",
+      "code": "def solution(n):\n    c1 = bin(n).count('1')\n    nn = n + 1\n    while bin(nn).count('1') != c1:\n        nn += 1\n    return nn",
+      "date": "2026-05-09",
+      "image": null,
+      "timestamp": "17783347222258317"
     }
   ]
 }

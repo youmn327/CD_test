@@ -67,6 +67,15 @@
       "date": "2026-05-06",
       "image": "backups/nym/181904_2026-05-06.png",
       "timestamp": "17779969276561179"
+    },
+    {
+      "member": "nym",
+      "problemId": "181942",
+      "problemName": "문자열 섞기",
+      "code": "def solution(str1, str2):\n    answer = \"\"\n    for i in range(len(str1)):\n        answer+= str1[i]\n        answer+= str2[i]\n    return answer",
+      "date": "2026-05-09",
+      "image": "backups/nym/181942_2026-05-09.png",
+      "timestamp": "17783369683270596"
     }
   ]
 }

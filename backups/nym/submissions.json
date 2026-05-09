@@ -76,6 +76,15 @@
       "date": "2026-05-09",
       "image": "backups/nym/181942_2026-05-09.png",
       "timestamp": "17783369683270596"
+    },
+    {
+      "member": "nym",
+      "problemId": "12906",
+      "problemName": "같은 숫자는 싫어",
+      "code": "def solution(arr):\n    answer = []\n    count = 0\n    answer.append(arr[0])\n    for i in range(1,len(arr)):\n        if arr[i-1] != arr[i] :\n            answer.append(arr[i])\n        elif i == len(arr):\n            answer.append(arr[i])\n                \n    \n    return answer",
+      "date": "2026-05-09",
+      "image": "backups/nym/12906_2026-05-09.png",
+      "timestamp": "17783375215670698"
     }
   ]
 }

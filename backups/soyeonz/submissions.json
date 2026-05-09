@@ -157,6 +157,15 @@
       "date": "2026-05-08",
       "image": "backups/soyeonz/12953_2026-05-08.jpg",
       "timestamp": "17781670123205507"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "17677",
+      "problemName": "[1차] 뉴스 클러스터링",
+      "code": "from collections import Counter\ndef to_multiset(str0):\n    st = [str0[i:i + 2].lower() for i in range(len(str0) - 1)]\n    return Counter(''.join(s) for s in st if ''.join(s).isalpha())\n    \ndef solution(str1, str2):\n    ms1 = to_multiset(str1)\n    ms2 = to_multiset(str2)\n    if not (ms1 or ms2):\n        return 65536\n    \n    intersects = sum(min(ms1[st], ms2[st]) for st in ms1 & ms2)\n    union = sum(ms1.values()) + sum(ms2.values()) - intersects\n    return int(intersects / union * 65536)",
+      "date": "2026-05-09",
+      "image": null,
+      "timestamp": "17783245277543739"
     }
   ]
 }

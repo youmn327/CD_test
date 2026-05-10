@@ -184,6 +184,15 @@
       "date": "2026-05-09",
       "image": null,
       "timestamp": "17783347222258317"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "17678",
+      "problemName": "[1차] 셔틀버스",
+      "code": "def min_to_time(m):\n    h = m // 60\n    m = m % 60\n    return f\"{h:02d}:{m:02d}\"\n\ndef time_to_min(t):\n    return int(t[:2]) * 60 + int(t[-2:])\n\ndef solution(n, t, m, timetable):\n    answer = \"00:00\"\n    timetable = [time_to_min(t) for t in timetable]\n    timetable.sort()\n    FIRST_BUS = 60 * 9\n    i = 0\n\n    for bus in range(n):\n        sit = 0\n        bus_time = FIRST_BUS + bus * t\n\n        while sit < m:\n            if i == len(timetable) or timetable[i] > bus_time:\n                break\n            sit += 1\n            i += 1\n        \n        answer = bus_time\n    if sit == m:\n        answer = timetable[i - 1] - 1\n\n    return min_to_time(answer)",
+      "date": "2026-05-10",
+      "image": null,
+      "timestamp": "17784024615798874"
     }
   ]
 }

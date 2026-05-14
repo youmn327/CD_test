@@ -58,6 +58,15 @@
       "date": "2026-05-05",
       "image": "backups/la/120808_2026-05-05.png",
       "timestamp": "17779482027757527"
+    },
+    {
+      "member": "la",
+      "problemId": "140108",
+      "problemName": "문자열 나누기",
+      "code": "class Solution {\n    fun solution(s: String): Int {\n        var answer = 0\n        var i = 0\n        \n        while (i < s.length) {\n            val x = s[i]\n            var xCount = 0\n            var otherCount = 0\n\n            while (i < s.length) {\n                if (s[i] == x) xCount++ else otherCount++\n                i++ \n                if (xCount == otherCount) break\n            }\n            answer++\n        }\n        return answer\n    }\n}",
+      "date": "2026-05-14",
+      "image": "backups/la/140108_2026-05-14.png",
+      "timestamp": "17787641029272921"
     }
   ]
 }

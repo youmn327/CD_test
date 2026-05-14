@@ -202,6 +202,24 @@
       "date": "2026-05-12",
       "image": null,
       "timestamp": "17785877734708517"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "120845",
+      "problemName": "주사위의 개수",
+      "code": "ㅅㅅ",
+      "date": "2026-05-14",
+      "image": "backups/soyeonz/120845_2026-05-14.jpg",
+      "timestamp": "17787669931111364"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "181944",
+      "problemName": "홀짝 구분하기",
+      "code": "ㅅㅅ",
+      "date": "2026-05-14",
+      "image": "backups/soyeonz/181944_2026-05-14.jpg",
+      "timestamp": "17787672841977069"
     }
   ]
 }

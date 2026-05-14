@@ -193,6 +193,15 @@
       "date": "2026-05-11",
       "image": "backups/soyeonz/12922_2026-05-11.jpg",
       "timestamp": "17784975945917192"
+    },
+    {
+      "member": "soyeonz",
+      "problemId": "42884",
+      "problemName": "단속카메라",
+      "code": "def solution(routes):\n    routes.sort(key=lambda x: x[1])\n    cams = [routes[0][1]]\n    for r in routes[1:]:\n        if r[0] <= cams[-1] <= r[1]:\n            continue\n        cams.append(r[1])\n    return len(cams)",
+      "date": "2026-05-12",
+      "image": null,
+      "timestamp": "17785877734708517"
     }
   ]
 }

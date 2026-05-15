@@ -114,11 +114,20 @@ export default function MemberPage({ member, initialSubmissions, problems, initi
     toast(`${problem.name} 제출 완료! 백업 커밋됨`);
   }
 
-  // 삭제
+  // 삭제 (관리자 비밀번호 필요)
   async function handleDelete(timestamp: string) {
+    if (!confirm('이 풀이를 삭제하시겠습니까?')) return;
+    const password = prompt('관리자 비밀번호를 입력하세요:');
+    if (password === null) return;
+    if (!password) return toast('비밀번호를 입력해야 합니다.', 'error');
+
     setLoading(true);
     setLoadingMsg('삭제 및 백업 커밋 중...');
-    const res = await fetch(`/api/submissions?timestamp=${timestamp}&member=${member.id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/submissions?timestamp=${timestamp}&member=${member.id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-password': password },
+    });
+    if (res.status === 401) { setLoading(false); return toast('비밀번호가 일치하지 않습니다.', 'error'); }
     if (!res.ok) { setLoading(false); return toast('삭제 실패', 'error'); }
     setSubmissions(prev => prev.filter(s => s.timestamp !== timestamp));
     setLoading(false);

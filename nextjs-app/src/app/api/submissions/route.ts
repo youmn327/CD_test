@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { getSubmissions, getSubmissionsByMember, addSubmission, removeSubmission, getMaintenanceMode } from '@/lib/kv';
 import { backupMemberData } from '@/lib/github';
 import { getMembers } from '@/lib/kv';
+
+const ADMIN_PASSWORD_HASH = '20c2624df470adfa41004928c0713817635b1df0ff1e986299f498a8e59a509d';
+
+function verifyPassword(password: string): boolean {
+  if (!password) return false;
+  const hash = createHash('sha256').update(password).digest('hex');
+  return hash === ADMIN_PASSWORD_HASH;
+}
 
 // GET /api/submissions?member=jjw
 export async function GET(req: NextRequest) {
@@ -41,8 +50,13 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(entry, { status: 201 });
 }
 
-// DELETE /api/submissions?timestamp=xxx
+// DELETE /api/submissions?timestamp=xxx - 관리자 비밀번호 필요
 export async function DELETE(req: NextRequest) {
+  const password = req.headers.get('x-admin-password') || '';
+  if (!verifyPassword(password)) {
+    return NextResponse.json({ error: '비밀번호가 일치하지 않습니다' }, { status: 401 });
+  }
+
   const timestamp = req.nextUrl.searchParams.get('timestamp');
   const memberId = req.nextUrl.searchParams.get('member');
   if (!timestamp) return NextResponse.json({ error: 'timestamp 필요' }, { status: 400 });

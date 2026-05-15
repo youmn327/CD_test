@@ -11,6 +11,7 @@ const MEMBERS_KEY = 'members';
 const SUBMISSIONS_KEY = 'submissions';
 const MIGRATION_KEY = 'id_migration_v1_done';
 const MAINTENANCE_KEY = 'maintenance_mode';
+const BET_STATE_KEY = 'bet_state_v1';
 
 // === Maintenance mode ===
 export async function getMaintenanceMode(): Promise<boolean> {
@@ -19,6 +20,45 @@ export async function getMaintenanceMode(): Promise<boolean> {
 
 export async function setMaintenanceMode(enabled: boolean): Promise<void> {
   await redis.set(MAINTENANCE_KEY, enabled);
+}
+
+// === Bet pause state ===
+export type PausedRange = { start: string; end: string | null };
+export type BetState = { pausedRanges: PausedRange[]; sessionStart: string };
+
+const DEFAULT_BET_STATE: BetState = { pausedRanges: [], sessionStart: '2026-05-01' };
+
+export async function getBetState(): Promise<BetState> {
+  const state = await redis.get<BetState>(BET_STATE_KEY);
+  return state || DEFAULT_BET_STATE;
+}
+
+export async function setBetState(state: BetState): Promise<void> {
+  await redis.set(BET_STATE_KEY, state);
+}
+
+export async function pauseBet(today: string): Promise<BetState> {
+  const state = await getBetState();
+  // 이미 일시정지 중이면 무시
+  const last = state.pausedRanges[state.pausedRanges.length - 1];
+  if (last && last.end === null) return state;
+  state.pausedRanges.push({ start: today, end: null });
+  await setBetState(state);
+  return state;
+}
+
+export async function resumeBet(today: string): Promise<BetState> {
+  const state = await getBetState();
+  const last = state.pausedRanges[state.pausedRanges.length - 1];
+  if (!last || last.end !== null) return state; // 일시정지 중이 아니면 무시
+  // 어제 날짜로 끝 설정
+  const d = new Date(today);
+  d.setDate(d.getDate() - 1);
+  last.end = d.toISOString().slice(0, 10);
+  // 세션 재시작
+  state.sessionStart = today;
+  await setBetState(state);
+  return state;
 }
 
 // 기존 problemId를 새 lesson_id 기반 ID로 마이그레이션

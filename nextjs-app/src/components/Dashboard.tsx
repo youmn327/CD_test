@@ -6,14 +6,24 @@ import type { Member, Submission } from '@/lib/types';
 import type { Problem } from '@/lib/problems';
 import Toast, { toast } from './Toast';
 
+type PausedRange = { start: string; end: string | null };
+type BetState = { pausedRanges: PausedRange[]; sessionStart: string };
+
 interface Props {
   initialMembers: Member[];
   initialSubmissions: Submission[];
   problems: Problem[];
   initialMaintenance?: boolean;
+  initialBetState?: BetState;
 }
 
-export default function Dashboard({ initialMembers, initialSubmissions, problems, initialMaintenance = false }: Props) {
+export default function Dashboard({
+  initialMembers,
+  initialSubmissions,
+  problems,
+  initialMaintenance = false,
+  initialBetState = { pausedRanges: [], sessionStart: '2026-05-01' },
+}: Props) {
   const [members, setMembers] = useState(initialMembers);
   const [submissions, setSubmissions] = useState(initialSubmissions);
   const [tab, setTab] = useState<'monthly' | 'daily'>('monthly');
@@ -28,6 +38,36 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const [loadingMsg, setLoadingMsg] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [maintenance, setMaintenance] = useState(initialMaintenance);
+  const [betState, setBetState] = useState<BetState>(initialBetState);
+  const lastPausedRange = betState.pausedRanges[betState.pausedRanges.length - 1];
+  const isBetPaused = !!(lastPausedRange && lastPausedRange.end === null);
+
+  // === 벌금 일시정지/재개 토글 ===
+  async function toggleBetPause() {
+    const next = !isBetPaused;
+    const action = next ? 'pause' : 'resume';
+    const msg = next
+      ? '벌금 제도를 일시정지하시겠습니까?\n(일시정지 동안: 벌금 없음, 크레딧 감소 없음)'
+      : '벌금 제도를 재개하시겠습니까?\n(누적 벌금은 0원으로 초기화되고 크레딧은 유지됩니다)';
+    if (!confirm(msg)) return;
+    const password = prompt('관리자 비밀번호를 입력하세요:');
+    if (password === null) return;
+    if (!password) return toast('비밀번호를 입력해야 합니다.', 'error');
+
+    setLoading(true);
+    setLoadingMsg(next ? '벌금 제도 일시정지 중...' : '벌금 제도 재개 중...');
+    const res = await fetch('/api/bet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+      body: JSON.stringify({ action }),
+    });
+    if (res.status === 401) { setLoading(false); return toast('비밀번호가 일치하지 않습니다.', 'error'); }
+    if (!res.ok) { setLoading(false); return toast('변경 실패', 'error'); }
+    const data = await res.json();
+    setBetState({ pausedRanges: data.pausedRanges, sessionStart: data.sessionStart });
+    setLoading(false);
+    toast(next ? '⏸️ 벌금 제도 일시정지됨' : '▶️ 벌금 제도 재개됨 (벌금 초기화)');
+  }
 
   // === 점검 모드 토글 ===
   async function toggleMaintenance() {
@@ -151,6 +191,15 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   const REQUIRED_DAILY_FOR_CREDIT = 2; // 하루 2문제 이상이면 streak 유효
   const BET_START_DATE = '2026-05-01'; // 내기 시작일
 
+  // 일시정지 기간에 포함되는지
+  function isDatePaused(dateStr: string): boolean {
+    return betState.pausedRanges.some(r => {
+      if (dateStr < r.start) return false;
+      if (r.end === null) return true;
+      return dateStr <= r.end;
+    });
+  }
+
   // 멤버별 일별 풀이 수
   function getDailyByMember(memberId: string): Record<string, number> {
     const result: Record<string, number> = {};
@@ -160,7 +209,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
     return result;
   }
 
-  // 멤버별 누적 크레딧 (BET_START_DATE부터 todayDate까지)
+  // 멤버별 누적 크레딧 (BET_START_DATE부터 todayDate까지, 일시정지 기간 제외)
   function calculateCredits(memberId: string, todayDate: Date): number {
     const startDate = new Date(BET_START_DATE);
     if (todayDate < startDate) return 0;
@@ -170,6 +219,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
     const cur = new Date(startDate);
     while (cur <= todayDate) {
       const dateStr = cur.toISOString().slice(0, 10);
+      if (isDatePaused(dateStr)) {
+        // 일시정지 기간: streak 변화 없음 (얼린 상태)
+        cur.setDate(cur.getDate() + 1);
+        continue;
+      }
       const cnt = dailyCounts[dateStr] || 0;
       if (cnt >= REQUIRED_DAILY_FOR_CREDIT) {
         streak++;
@@ -183,11 +237,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
   }
 
   function calculateFines() {
-    const startDate = new Date(BET_START_DATE);
+    // 세션 시작일 사용 (벌금은 현재 세션부터만 누적)
+    const sessionStartDate = new Date(betState.sessionStart);
     const todayDate = new Date(today.toISOString().slice(0, 10));
 
-    // 시작일이 아직 안 됐으면 빈 결과
-    if (todayDate < startDate) {
+    if (todayDate < sessionStartDate) {
       return {
         byMember: {} as Record<string, number>,
         total: 0,
@@ -196,11 +250,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
       };
     }
 
-    // 1단계: 각 버킷마다 부족 문제 수집 (멤버별, 시간순)
+    // 1단계: 각 버킷마다 부족 문제 수집 (일시정지 기간이 포함된 버킷은 제외)
     const bucketsByMember: Record<string, Array<{ start: string, end: string, count: number, missing: number }>> = {};
     members.forEach(m => { bucketsByMember[m.id] = []; });
 
-    const cur = new Date(startDate);
+    const cur = new Date(sessionStartDate);
     while (cur <= todayDate) {
       const periodStart = new Date(cur);
       const periodEnd = new Date(cur);
@@ -209,6 +263,12 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
 
       const startStr = periodStart.toISOString().slice(0, 10);
       const endStr = periodEnd.toISOString().slice(0, 10);
+
+      // 일시정지 기간이 포함된 버킷은 평가 제외
+      if (isDatePaused(startStr) || isDatePaused(endStr)) {
+        cur.setDate(cur.getDate() + PERIOD_DAYS);
+        continue;
+      }
 
       members.forEach(m => {
         const count = submissions.filter(s =>
@@ -263,18 +323,17 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
 
   const fines = calculateFines();
 
-  // === 월별 벌금 정산 (크레딧 반영): { memberId: { 'YYYY-MM': fine } } ===
+  // === 월별 벌금 정산 (크레딧 반영, 일시정지/세션 반영) ===
   function calculateFinesByMonth() {
-    const startDate = new Date(BET_START_DATE);
+    const sessionStartDate = new Date(betState.sessionStart);
     const todayDate = new Date(today.toISOString().slice(0, 10));
     const result: Record<string, Record<string, number>> = {};
     members.forEach(mem => { result[mem.id] = {}; });
-    if (todayDate < startDate) return result;
+    if (todayDate < sessionStartDate) return result;
 
-    // 각 멤버별 시간순 버킷 처리 + 크레딧 적용
     members.forEach(mem => {
       let available = calculateCredits(mem.id, todayDate);
-      const cur = new Date(startDate);
+      const cur = new Date(sessionStartDate);
       while (cur <= todayDate) {
         const periodStart = new Date(cur);
         const periodEnd = new Date(cur);
@@ -284,6 +343,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         const startStr = periodStart.toISOString().slice(0, 10);
         const endStr = periodEnd.toISOString().slice(0, 10);
         const monthKey = startStr.slice(0, 7);
+
+        if (isDatePaused(startStr) || isDatePaused(endStr)) {
+          cur.setDate(cur.getDate() + PERIOD_DAYS);
+          continue;
+        }
 
         const count = submissions.filter(s =>
           s.member === mem.id && s.date >= startStr && s.date <= endStr
@@ -333,8 +397,27 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
         </div>
       )}
 
+      {/* 벌금 일시정지 배너 */}
+      {isBetPaused && (
+        <div className="bg-orange-500/15 border border-orange-500/40 rounded-lg p-3 mb-4 flex items-center gap-2 text-sm">
+          <span className="text-orange-400 font-bold">⏸️ 벌금 제도 일시정지 중</span>
+          <span className="text-[#8b949e]">— 일시정지 기간 동안 벌금이 부과되지 않고 크레딧도 감소하지 않습니다.</span>
+        </div>
+      )}
+
       {/* 상단 액션 버튼 */}
-      <div className="flex justify-end gap-2 mb-4">
+      <div className="flex justify-end gap-2 mb-4 flex-wrap">
+        <button
+          onClick={toggleBetPause}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
+            isBetPaused
+              ? 'bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/50 text-orange-300'
+              : 'bg-[#21262d] hover:bg-[#30363d] border-[#30363d] text-[#8b949e] hover:text-white'
+          }`}
+          title={isBetPaused ? '벌금 재개 (벌금 초기화 + 크레딧 유지)' : '벌금 일시정지'}
+        >
+          <span>{isBetPaused ? '▶️ 벌금 재개' : '⏸️ 벌금 일시정지'}</span>
+        </button>
         <button
           onClick={toggleMaintenance}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
@@ -460,6 +543,32 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                     <div className="text-[11px] text-[#8b949e] mt-1.5">파란/보라 테두리가 한 묶음 (2일). D1=첫째날, D2=둘째날, B1/B2=버킷 번호</div>
                   </div>
                 </div>
+              </section>
+
+              {/* 벌금 일시정지 */}
+              <section className="bg-orange-500/5 border border-orange-500/30 rounded-lg p-4">
+                <h4 className="text-base font-semibold text-orange-400 mb-2">⏸️ 벌금 일시정지 (운영자 전용)</h4>
+                <ul className="space-y-1 text-[#e6edf3] list-disc list-inside text-sm leading-relaxed">
+                  <li>대시보드 우측 상단 <b>⏸️ 벌금 일시정지</b> 버튼 → 관리자 비밀번호 입력</li>
+                  <li>일시정지 기간 동안: <b>벌금 부과 없음</b> + <b>크레딧 감소 없음</b></li>
+                  <li>해당 기간 풀이는 streak/벌금 계산에서 제외 (얼린 상태)</li>
+                  <li><b>▶️ 벌금 재개</b> 시: <b>누적 벌금 0원 초기화</b> + <b>크레딧 유지</b></li>
+                  <li>재개 시점부터 새로운 세션 시작 (벌금 누적 새로 시작)</li>
+                </ul>
+              </section>
+
+              {/* 벌금 일시정지 */}
+              <section>
+                <h4 className="text-base font-semibold text-orange-400 mb-2">⏸️ 벌금 일시정지 (운영자 전용)</h4>
+                <p className="text-[#e6edf3] leading-relaxed mb-2">
+                  여행/시험 기간 등으로 벌금 제도를 잠시 멈춰야 할 때 사용합니다.
+                </p>
+                <ul className="space-y-1 text-[#e6edf3] list-disc list-inside text-xs">
+                  <li>대시보드 우측 상단 <b>⏸️ 벌금 일시정지</b> 버튼 → 비밀번호 입력 → 활성화</li>
+                  <li>일시정지 기간 동안: 벌금 부과 X, 크레딧 감소 X, streak 동결</li>
+                  <li>재개 시: <b>누적 벌금 0원으로 초기화</b>, 크레딧은 그대로 유지</li>
+                  <li>일시정지된 날짜는 캘린더에 주황색 테두리 + ⏸ 정지 라벨로 표시</li>
+                </ul>
               </section>
 
               {/* 점검 모드 */}
@@ -689,9 +798,10 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                     // 2일 버킷 그룹 표시 (BET_START_DATE 이후만)
                     const cellDate = new Date(dateStr);
                     const betStart = new Date(BET_START_DATE);
+                    const isPausedDay = isDatePaused(dateStr);
                     let bucketIdx = -1;
                     let posInBucket = -1; // 0: 첫째날, 1: 둘째날
-                    if (cellDate >= betStart) {
+                    if (cellDate >= betStart && !isPausedDay) {
                       const dayDiff = Math.floor((cellDate.getTime() - betStart.getTime()) / (24 * 60 * 60 * 1000));
                       bucketIdx = Math.floor(dayDiff / PERIOD_DAYS);
                       posInBucket = dayDiff % PERIOD_DAYS;
@@ -709,7 +819,7 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                     return (
                       <div
                         key={dow}
-                        className={`min-h-[110px] border-2 p-2 flex flex-col transition-all relative ${isToday ? 'border-[#58a6ff] ring-2 ring-[#58a6ff]/40' : 'border-[#21262d] hover:border-[#30363d]'} ${isFuture ? 'opacity-30' : ''} ${bgColors[intensity]}`}
+                        className={`min-h-[110px] border-2 p-2 flex flex-col transition-all relative ${isToday ? 'border-[#58a6ff] ring-2 ring-[#58a6ff]/40' : isPausedDay ? 'border-orange-500/40 bg-orange-500/5' : 'border-[#21262d] hover:border-[#30363d]'} ${isFuture ? 'opacity-30' : ''} ${!isPausedDay ? bgColors[intensity] : ''}`}
                         style={{
                           borderTopLeftRadius: bucketIdx < 0 || isFirstOfPair ? '0.5rem' : pairStartedInRow ? '0' : '0.5rem',
                           borderBottomLeftRadius: bucketIdx < 0 || isFirstOfPair ? '0.5rem' : pairStartedInRow ? '0' : '0.5rem',
@@ -731,6 +841,11 @@ export default function Dashboard({ initialMembers, initialSubmissions, problems
                             style={{ background: groupColor }}
                           >
                             B{bucketIdx + 1}
+                          </div>
+                        )}
+                        {isPausedDay && (
+                          <div className="absolute -top-2 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold text-white shadow-md z-10 bg-orange-500" title="벌금 일시정지 기간">
+                            ⏸ 정지
                           </div>
                         )}
                         <div className="flex items-center justify-between mb-1.5">

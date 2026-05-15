@@ -1,4 +1,4 @@
-import { getMembers, getSubmissions, getMaintenanceMode } from '@/lib/kv';
+import { getMembers, getSubmissions, getMaintenanceMode, getBetState } from '@/lib/kv';
 import { PROBLEMS } from '@/lib/problems';
 import Dashboard from '@/components/Dashboard';
 
@@ -8,6 +8,7 @@ export default async function Home() {
   const members = await getMembers();
   const submissions = await getSubmissions();
   const maintenance = await getMaintenanceMode();
+  const betState = await getBetState();
 
   return (
     <main className="max-w-[960px] mx-auto px-4 py-6">
@@ -30,6 +31,7 @@ export default async function Home() {
         initialSubmissions={submissions}
         problems={PROBLEMS}
         initialMaintenance={maintenance}
+        initialBetState={betState}
       />
     </main>
   );

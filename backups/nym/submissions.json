@@ -85,6 +85,15 @@
       "date": "2026-05-09",
       "image": "backups/nym/12906_2026-05-09.png",
       "timestamp": "17783375215670698"
+    },
+    {
+      "member": "nym",
+      "problemId": "181880",
+      "problemName": "1로 만들기",
+      "code": "def solution(num_list):\n    count = 0\n    for num in num_list :       \n        while num != 1 :\n            if num % 2 == 0:\n                num = num //2\n                count += 1    \n            else :\n                num = (num - 1) //2\n                count += 1\n    return count",
+      "date": "2026-05-22",
+      "image": "backups/nym/181880_2026-05-22.png",
+      "timestamp": "17793786049439853"
     }
   ]
 }
